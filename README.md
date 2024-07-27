@@ -10,9 +10,9 @@
 　　想法如下：<br>
 	<ul>
 		<li>1. 用 ffmpeg 把影片 → 單張圖片 (一秒30幀)</li>
-		<li>2. 用 ffmpeg 把影片輸出聲音 (mp3)</li>
+		<li>2. 用 ffmpeg 把影片輸出聲音 (wav)</li>
 		<li>3. 用 Real-ESRGAN-ncnn-vulkan 把第 1 步驟作出的圖片，轉成高解析度圖片</li>
-		<li>4. 用 ffmpeg 把高解析度圖片、mp3檔合併為新影片</li>
+		<li>4. 用 ffmpeg 把高解析度圖片、wav檔合併為新影片</li>
 		<li>5. 刪除處理過程的暫存檔</li>
 		<li>6. 將以上步驟作成 C# 小程式</li>
 	</ul>

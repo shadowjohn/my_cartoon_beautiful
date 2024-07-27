@@ -270,9 +270,9 @@ namespace my_cartoon_beautiful
                         cts = null;
                         return;
                     }
-                    //將 影片轉 mp3
+                    //將 影片轉 wav
                     cts = new CancellationTokenSource();
-                    success = await App.step3_sourceFile_to_mp3(workPath, sourceFile, targetFile, cts.Token);
+                    success = await App.step3_sourceFile_to_wav(workPath, sourceFile, targetFile, cts.Token);
                     if (!success)
                     {
                         uiRunOrStop("STOP");
@@ -288,7 +288,7 @@ namespace my_cartoon_beautiful
                         cts = null;
                         return;
                     }
-                    //將 ai 轉的高解析度影像 png 與 mp3 合併輸出成 mp4 
+                    //將 ai 轉的高解析度影像 png 與 wav 合併輸出成 mp4 
                     cts = new CancellationTokenSource();
                     success = await App.step5_aiPng_to_mp4(workPath, targetFile, cts.Token);
                     if (!success)

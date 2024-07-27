@@ -170,7 +170,7 @@ namespace utility_app
                 return true;
             }, cancellationToken);
         }
-        public async Task<bool> step3_sourceFile_to_mp3(string workPath, string sourceFile, string targetFile, CancellationToken cancellationToken)
+        public async Task<bool> step3_sourceFile_to_wav(string workPath, string sourceFile, string targetFile, CancellationToken cancellationToken)
         {
             string ffmpegBin = Path.Combine(theform.PWD, "binary", "ffmpeg.exe");
             if (!theform.my.is_file(ffmpegBin))
@@ -182,12 +182,11 @@ namespace utility_app
             {
                 theform.setProgressTitle("影片轉出聲音檔...");
             }));
-            string mp3_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
-            string progressFilePath = Path.Combine(workPath, "progress.txt");
+            string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");            
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
-                Arguments = $" -y -i \"{sourceFile}\" -progress \"{progressFilePath}\" -vn  \"{mp3_file}\"",
+                Arguments = $" -y -i \"{sourceFile}\" -vn \"{wav_file}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -384,7 +383,7 @@ namespace utility_app
             {
                 theform.setProgressTitle("高解析度影像與聲音檔合併輸出...");
             }));
-            string mp3File = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
+            string wavFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
             string aIPngPath = Path.Combine(workPath, "target");
             string progressFilePath = Path.Combine(workPath, "progress.txt");
 
@@ -408,7 +407,8 @@ namespace utility_app
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
-                Arguments = $" -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{mp3File}\" -progress \"{progressFilePath}\" -c:v libx264 -pix_fmt yuv420p -c:a aac -strict experimental \"{targetFile}\"",
+                //-strict experimental
+                Arguments = $" -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{wavFile}\" -progress \"{progressFilePath}\" -c:v libx264 -pix_fmt yuv420p -c:a aac \"{targetFile}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
