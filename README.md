@@ -52,6 +52,8 @@
 <h3>版本說明：</h3>
 V0.01 版 (2024-07-28)：<br>
 初版簽入<br>
+微軟送審：https://www.microsoft.com/en-us/wdsi/submission/48aea697-2456-458d-bbfa-bd442e6763f2
+
 <br>
 <h3>參考資料：</h3>
 <ul>
