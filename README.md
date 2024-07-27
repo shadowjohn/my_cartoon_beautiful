@@ -31,7 +31,7 @@
 <img src="snapshot/s2.png">
 <br>
 <center>影片產出範例</center>
-<a href="" target="_blank">範例瀏覽</a>
+<a href="https://github.com/shadowjohn/my_cartoon_beautiful/tree/main/example" target="_blank">範例瀏覽</a>
 <br>
 <br>
 <h3>使用方法：</h3>
