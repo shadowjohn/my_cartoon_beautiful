@@ -20,7 +20,7 @@ namespace my_cartoon_beautiful
     {
         public myinclude my = new myinclude();
         myApp App = null;
-        static string PROGRAM_NAME = "影像清晰機";
+        static string PROGRAM_NAME = "影片高清小程式";
         static string PROGRAM_VERSION = "0.01";
         public string PWD = "";
         static string TMP_PATH = "";
@@ -345,6 +345,17 @@ namespace my_cartoon_beautiful
                 }
             }
 
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            string message = @"
+" + PROGRAM_NAME + @"
+
+版本：" + PROGRAM_VERSION + @"
+作者：羽山 (https://3wa.tw)
+";
+            MessageBox.Show(message,"說明",MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }
