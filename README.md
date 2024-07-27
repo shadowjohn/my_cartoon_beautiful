@@ -4,6 +4,9 @@
 <h3>開發動機：</h3>
 　　前陣子在網路上發現 https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan
 這個可以針對卡通圖片變成高清圖片的 project，產出的品質相當好，覺得可以整合加以利用。<br>
+轉檔速度不是很快，需要有點耐心^^...<br>
+有較好的顯卡GPU才能加快速度<br>
+
 　　想法如下：<br>
 	<ul>
 		<li>1. 用 ffmpeg 把影片 → 單張圖片 (一秒30幀)</li>
