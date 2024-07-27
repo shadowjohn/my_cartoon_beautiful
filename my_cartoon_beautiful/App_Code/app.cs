@@ -70,7 +70,7 @@ namespace utility_app
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
-                Arguments = $" -y -i \"{sourceFile}\" -vf \"fps=30\" -progress \"{progressFilePath}\" -f image2  \"{workPath}\\source\\%08d.png\"",
+                Arguments = $" -y -i \"{sourceFile}\" -vf \"fps=30\" -progress \"{progressFilePath}\" -f image2  \"{workPath}\\source\\%08d.png\" ",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -86,6 +86,7 @@ namespace utility_app
                     // 獲取進度
                     try
                     {
+                        string last_progressText = null;
                         while (!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
@@ -110,10 +111,27 @@ namespace utility_app
                                     Task.Delay(1000).Wait(); // 非阻塞的延遲
                                     continue;
                                 }
-
+                                bool isEnd = false;
                                 var m = theform.my.explode("\n", progressText);
+                                if (last_progressText == null)
+                                {
+                                    last_progressText = progressText;
+                                }
+                                else
+                                {
+                                    if (last_progressText == progressText)
+                                    {
+                                        isEnd = true;
+                                    }
+                                }
+
                                 for (int i = m.Count() - 1; i >= 0; i--)
                                 {
+                                    Console.WriteLine(m[i]);
+                                    if (m[i].Trim() == "progress=end")
+                                    {
+                                        isEnd = true;
+                                    }
                                     if (theform.my.is_string_like_new(m[i], "frame=%"))
                                     {
                                         double d = Convert.ToDouble(theform.my.explode("frame=", m[i].Trim())[1]);
@@ -123,20 +141,26 @@ namespace utility_app
                                         break;
                                     }
                                 }
+
+                                if (isEnd)
+                                {
+                                    break;
+                                }
+                                last_progressText = progressText;
                             }
                             Task.Delay(1000).Wait(); // 非阻塞的延遲
-                        }
+                        }; // while
 
-                        if (File.Exists(progressFilePath))
+                        //if (File.Exists(progressFilePath))
                         {
-                            string progressText = File.ReadAllText(progressFilePath);
-                            Console.WriteLine("PPPPPPPPPPPPPPPPPPPPPPPPP Done:");
-                            Console.WriteLine(progressText);
+                            //string progressText = File.ReadAllText(progressFilePath);
+                            //Console.WriteLine("PPPPPPPPPPPPPPPPPPPPPPPPP Done:");
+                            //Console.WriteLine(progressText);
                             theform.Invoke((MethodInvoker)(() => theform.setProgress(15)));
                         }
 
-                        string error = process.StandardError.ReadToEnd();
-                        Console.WriteLine("Error: " + error);
+                        //string error = process.StandardError.ReadToEnd();
+                        //Console.WriteLine("Error: " + error);
                     }
                     catch
                     {
@@ -199,19 +223,19 @@ namespace utility_app
                             Task.Delay(1000).Wait(); // 非阻塞的延遲
                         }
 
-                        if (File.Exists(progressFilePath))
+                        //if (File.Exists(progressFilePath))
                         {
-                            string progressText = File.ReadAllText(progressFilePath);
-                            Console.WriteLine("PPPPPPPPPPPPPPPPPPPPPPPPP Done:");
-                            Console.WriteLine(progressText);
+                            //string progressText = File.ReadAllText(progressFilePath);
+                            //Console.WriteLine("PPPPPPPPPPPPPPPPPPPPPPPPP Done:");
+                            //Console.WriteLine(progressText);
                             theform.Invoke((MethodInvoker)(() =>
                             {
                                 theform.setProgress(18);
                                 theform.setProgressTitle("影片轉出聲音檔完成");
                             }));
                         }
-                        string error = process.StandardError.ReadToEnd();
-                        Console.WriteLine("Error: " + error);
+                        //string error = process.StandardError.ReadToEnd();
+                        //Console.WriteLine("Error: " + error);
                     }
                     catch
                     {
@@ -232,7 +256,7 @@ namespace utility_app
 
             theform.Invoke((MethodInvoker)(() =>
             {
-                theform.setProgressTitle("原影像圖片轉成高清圖片...");
+                theform.setProgressTitle("原影像圖片轉成高解析度圖片...");
             }));
 
             string sourcePath = Path.Combine(workPath, "source");
@@ -270,7 +294,7 @@ namespace utility_app
 
             theform.Invoke((MethodInvoker)(() =>
             {
-                theform.setProgressTitle("高清影像轉檔...");
+                theform.setProgressTitle("高解析度影像轉檔...");
             }));
 
             return await Task.Run(() =>
@@ -300,6 +324,7 @@ namespace utility_app
                         process.BeginOutputReadLine();
                         process.BeginErrorReadLine();
 
+
                         while (!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
@@ -321,7 +346,7 @@ namespace utility_app
 
                             theform.Invoke((MethodInvoker)(() =>
                             {
-                                theform.setProgressTitle($"高清影像轉檔... {nowPngs} / {totalsPngs}");
+                                theform.setProgressTitle($"高解析度影像轉檔... {nowPngs} / {totalsPngs}");
                                 double percentComplete = (double)nowPngs / totalsPngs * 100.0;
                                 double showPercent = theform.my.arduino_map(percentComplete, 0, 100.0, 18.0, 87.0);
                                 theform.setProgress(showPercent);
@@ -357,7 +382,7 @@ namespace utility_app
             }
             theform.Invoke((MethodInvoker)(() =>
             {
-                theform.setProgressTitle("高清影像與聲音檔合併輸出...");
+                theform.setProgressTitle("高解析度影像與聲音檔合併輸出...");
             }));
             string mp3File = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
             string aIPngPath = Path.Combine(workPath, "target");
@@ -392,7 +417,7 @@ namespace utility_app
 
             theform.Invoke((MethodInvoker)(() =>
             {
-                theform.setProgressTitle("高清影像與聲音合併中...");
+                theform.setProgressTitle("高解析度影像與聲音合併中...");
             }));
 
             return await Task.Run(() =>
@@ -421,6 +446,7 @@ namespace utility_app
                         process.Start();
                         process.BeginOutputReadLine();
                         process.BeginErrorReadLine();
+                        string last_progressText = null;
 
                         while (!process.HasExited)
                         {
@@ -446,9 +472,25 @@ namespace utility_app
                                     continue;
                                 }
 
+                                bool isEnd = false;
                                 var m = theform.my.explode("\n", progressText);
+                                if (last_progressText == null)
+                                {
+                                    last_progressText = progressText;
+                                }
+                                else
+                                {
+                                    if (last_progressText == progressText)
+                                    {
+                                        isEnd = true;
+                                    }
+                                }
                                 for (int i = m.Count() - 1; i >= 0; i--)
                                 {
+                                    if (m[i].Trim() == "progress=end")
+                                    {
+                                        isEnd = true;
+                                    }
                                     if (theform.my.is_string_like_new(m[i], "frame=%"))
                                     {
                                         double d = Convert.ToDouble(theform.my.explode("frame=", m[i].Trim())[1]);
@@ -458,6 +500,11 @@ namespace utility_app
                                         break;
                                     }
                                 }
+                                if (isEnd)
+                                {
+                                    break;
+                                }
+                                last_progressText = progressText;
                             }
                             Task.Delay(1000).Wait(); // 非阻塞的延遲
 
@@ -473,7 +520,7 @@ namespace utility_app
                 theform.Invoke((MethodInvoker)(() =>
                 {
                     theform.setProgress(98);
-                    theform.setProgressTitle("高清影像與聲音合併完成...");
+                    theform.setProgressTitle("高解析度影像與聲音合併完成...");
                 }));
                 return true;
             }, cancellationToken);
@@ -495,7 +542,7 @@ namespace utility_app
                     theform.Invoke((MethodInvoker)(() =>
                     {
                         theform.setProgress(100.0);
-                        theform.setProgressTitle("高清影像與聲音合併完成...");
+                        theform.setProgressTitle("高解析度影像與聲音合併完成...");
                     }));
                     return true;
                 }

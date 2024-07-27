@@ -20,7 +20,7 @@ namespace my_cartoon_beautiful
     {
         public myinclude my = new myinclude();
         myApp App = null;
-        static string PROGRAM_NAME = "影片高清小程式";
+        static string PROGRAM_NAME = "影片高解析度小程式";
         static string PROGRAM_VERSION = "0.01";
         public string PWD = "";
         static string TMP_PATH = "";
@@ -279,7 +279,7 @@ namespace my_cartoon_beautiful
                         cts = null;
                         return;
                     }
-                    //將 原影像 png 用 ai 轉成高清
+                    //將 原影像 png 用 ai 轉成高解析度
                     cts = new CancellationTokenSource();
                     success = await App.step4_sourcePng_to_aiPng(workPath, cts.Token);
                     if (!success)
@@ -288,7 +288,7 @@ namespace my_cartoon_beautiful
                         cts = null;
                         return;
                     }
-                    //將 ai 轉的高清影像 png 與 mp3 合併輸出成 mp4 
+                    //將 ai 轉的高解析度影像 png 與 mp3 合併輸出成 mp4 
                     cts = new CancellationTokenSource();
                     success = await App.step5_aiPng_to_mp4(workPath, targetFile, cts.Token);
                     if (!success)

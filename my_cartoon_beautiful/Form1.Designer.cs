@@ -97,7 +97,7 @@
             this.txtSource.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.txtSource.Location = new System.Drawing.Point(39, 82);
             this.txtSource.Name = "txtSource";
-            this.txtSource.Size = new System.Drawing.Size(867, 39);
+            this.txtSource.Size = new System.Drawing.Size(939, 39);
             this.txtSource.TabIndex = 4;
             // 
             // txtOutput
@@ -105,7 +105,7 @@
             this.txtOutput.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.txtOutput.Location = new System.Drawing.Point(39, 180);
             this.txtOutput.Name = "txtOutput";
-            this.txtOutput.Size = new System.Drawing.Size(867, 39);
+            this.txtOutput.Size = new System.Drawing.Size(939, 39);
             this.txtOutput.TabIndex = 5;
             // 
             // button2
@@ -134,7 +134,7 @@
             // 
             this.progressBar1.Location = new System.Drawing.Point(39, 366);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(867, 47);
+            this.progressBar1.Size = new System.Drawing.Size(939, 47);
             this.progressBar1.TabIndex = 8;
             this.progressBar1.Visible = false;
             // 
@@ -187,7 +187,7 @@
             // button3
             // 
             this.button3.Font = new System.Drawing.Font("微軟正黑體", 21.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            this.button3.Location = new System.Drawing.Point(837, 12);
+            this.button3.Location = new System.Drawing.Point(891, 12);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(98, 47);
             this.button3.TabIndex = 13;
@@ -199,7 +199,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(947, 425);
+            this.ClientSize = new System.Drawing.Size(1001, 425);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.comboBox_ImageScale);
             this.Controls.Add(this.label3);

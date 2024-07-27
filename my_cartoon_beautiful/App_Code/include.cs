@@ -5,6 +5,7 @@ using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -36,6 +37,10 @@ namespace utility
             //string[] test = my.glob("c:\\tmp");
             //my.echo(my.pre_print_r(test));
             return Directory.GetFiles(path);
+        }
+        public string b2s(byte[] input)
+        {
+            return System.Text.Encoding.UTF8.GetString(input);
         }
         public string[] glob(string path, string patten)
         {
@@ -479,17 +484,53 @@ namespace utility
         {
             return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
         }
+        public byte[] file_get_contents(string f)
+        {
+            byte[] data;
+            using (var fs = new FileStream(f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                data = ReadStream(fs, 8192);
+                fs.Close();
+            };
+            return data;
+        }
+        private byte[] ReadStream(Stream stream, int initialLength)
+        {
+            if (initialLength < 1)
+            {
+                initialLength = 32768;
+            }
+            byte[] buffer = new byte[initialLength];
+            int read = 0;
+            int chunk;
+            while ((chunk = stream.Read(buffer, read, buffer.Length - read)) > 0)
+            {
+                read += chunk;
+                if (read == buffer.Length)
+                {
+                    int nextByte = stream.ReadByte();
+                    if (nextByte == -1)
+                    {
+                        return buffer;
+                    }
+                    byte[] newBuffer = new byte[buffer.Length * 2];
+                    Array.Copy(buffer, newBuffer, buffer.Length);
+                    newBuffer[read] = (byte)nextByte;
+                    buffer = newBuffer;
+                    read++;
+                }
+            }
+            byte[] bytes = new byte[read];
+            Array.Copy(buffer, bytes, read);
+            return bytes;
+        }
         public string readFileWithRetry(string filePath, int maxRetries = 50, int delayMilliseconds = 100)
         {
             for (int i = 0; i < maxRetries; i++)
             {
                 try
                 {
-                    using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    using (StreamReader reader = new StreamReader(fs))
-                    {
-                        return reader.ReadToEnd();
-                    }
+                    return b2s(file_get_contents(filePath));
                 }
                 catch (IOException ex)
                 {
