@@ -521,23 +521,18 @@ namespace utility_app
                     {
                         process.Start();
                         //process.BeginOutputReadLine();
-                        //process.BeginErrorReadLine();
-                        string last_progressText = null;
-                        int same_data_times = 0;
+                        //process.BeginErrorReadLine();                        
                         while (!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
                             {
-                                for (int i = 0; i < 5; i++)
+                                try
                                 {
-                                    try
-                                    {
-                                        process.Kill(); // 終止 ffmpeg 進程
-                                        process.Dispose();
-                                    }
-                                    catch
-                                    {
-                                    }
+                                    process.Kill(); // 終止 ffmpeg 進程
+                                    process.Dispose();
+                                }
+                                catch
+                                {
                                 }
                                 isCancel = true;
                                 cancellationToken.ThrowIfCancellationRequested();
@@ -555,25 +550,7 @@ namespace utility_app
 
                                 bool isEnd = false;
                                 var m = theform.my.explode("\n", progressText);
-                                if (last_progressText == null)
-                                {
-                                    last_progressText = progressText;
-                                }
-                                else
-                                {
-                                    if (last_progressText == progressText)
-                                    {
-                                        same_data_times++;
-                                        if (same_data_times >= 10)
-                                        {
-                                            isEnd = true;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        same_data_times = 0;
-                                    }
-                                }
+                                
                                 for (int i = m.Count() - 1; i >= 0; i--)
                                 {
                                     if (m[i].Trim() == "progress=end")
@@ -593,7 +570,7 @@ namespace utility_app
                                 {
                                     break;
                                 }
-                                last_progressText = progressText;
+                                
                             }
                             Task.Delay(1000).Wait(); // 非阻塞的延遲
 
