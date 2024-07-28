@@ -87,6 +87,7 @@ namespace utility_app
                     try
                     {
                         string last_progressText = null;
+                        int same_data_times = 0;
                         while (!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
@@ -121,7 +122,11 @@ namespace utility_app
                                 {
                                     if (last_progressText == progressText)
                                     {
-                                        isEnd = true;
+                                        same_data_times++;
+                                        if (same_data_times >= 10)
+                                        {
+                                            isEnd = true;
+                                        }
                                     }
                                 }
 
@@ -447,7 +452,7 @@ namespace utility_app
                         process.BeginOutputReadLine();
                         process.BeginErrorReadLine();
                         string last_progressText = null;
-
+                        int same_data_times = 0;
                         while (!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
@@ -482,7 +487,11 @@ namespace utility_app
                                 {
                                     if (last_progressText == progressText)
                                     {
-                                        isEnd = true;
+                                        same_data_times++;
+                                        if (same_data_times >= 10)
+                                        {
+                                            isEnd = true;
+                                        }
                                     }
                                 }
                                 for (int i = m.Count() - 1; i >= 0; i--)

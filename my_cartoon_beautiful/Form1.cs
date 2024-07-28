@@ -258,6 +258,7 @@ namespace my_cartoon_beautiful
                     if (!App.step1_checkWorkPath(workPath))
                     {
                         uiRunOrStop("STOP");
+                        try { my.deltree(workPath); } catch { }
                         cts = null;
                         return;
                     }
@@ -267,6 +268,7 @@ namespace my_cartoon_beautiful
                     if (!success)
                     {
                         uiRunOrStop("STOP");
+                        try { my.deltree(workPath); } catch { }
                         cts = null;
                         return;
                     }
@@ -276,6 +278,7 @@ namespace my_cartoon_beautiful
                     if (!success)
                     {
                         uiRunOrStop("STOP");
+                        try { my.deltree(workPath); } catch { }
                         cts = null;
                         return;
                     }
@@ -285,6 +288,7 @@ namespace my_cartoon_beautiful
                     if (!success)
                     {
                         uiRunOrStop("STOP");
+                        try { my.deltree(workPath); } catch { }
                         cts = null;
                         return;
                     }
@@ -294,6 +298,7 @@ namespace my_cartoon_beautiful
                     if (!success)
                     {
                         uiRunOrStop("STOP");
+                        try{my.deltree(workPath);}catch { }
                         cts = null;
                         return;
                     }
