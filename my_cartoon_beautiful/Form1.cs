@@ -268,7 +268,7 @@ namespace my_cartoon_beautiful
                     if (!success)
                     {
                         uiRunOrStop("STOP");
-                        try { my.deltree(workPath); } catch { }
+                        try { await Task.Run(() => my.deltree(workPath)); } catch { }
                         cts = null;
                         return;
                     }
@@ -278,7 +278,7 @@ namespace my_cartoon_beautiful
                     if (!success)
                     {
                         uiRunOrStop("STOP");
-                        try { my.deltree(workPath); } catch { }
+                        try { await Task.Run(() => my.deltree(workPath)); } catch { }
                         cts = null;
                         return;
                     }
@@ -288,7 +288,7 @@ namespace my_cartoon_beautiful
                     if (!success)
                     {
                         uiRunOrStop("STOP");
-                        try { my.deltree(workPath); } catch { }
+                        try { await Task.Run(() => my.deltree(workPath)); } catch { }
                         cts = null;
                         return;
                     }
@@ -298,7 +298,7 @@ namespace my_cartoon_beautiful
                     if (!success)
                     {
                         uiRunOrStop("STOP");
-                        try{my.deltree(workPath);}catch { }
+                        try { await Task.Run(() => my.deltree(workPath)); } catch { }
                         cts = null;
                         return;
                     }

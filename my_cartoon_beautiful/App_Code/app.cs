@@ -88,19 +88,41 @@ namespace utility_app
                     {
                         string last_progressText = null;
                         int same_data_times = 0;
+                        bool isCancel = false;
                         while (!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
                             {
                                 try
                                 {
-                                    process.Kill(); // 終止 ffmpeg 進程
+                                    Console.WriteLine("Do kill ffmpeg...");
+                                    for (int i = 0; i < 5; i++)
+                                    {
+                                        try
+                                        {
+                                            process.Kill(); // 終止 ffmpeg 進程
+                                            process.Dispose();
+                                        }
+                                        catch
+                                        {
+                                        }
+                                    }
+
+                                    isCancel = true;
+                                    Console.WriteLine("ffmpeg process killed.");
+                                    break;
+
                                 }
-                                catch
+                                catch (Exception ex)
                                 {
+
+                                    Console.WriteLine($"Exception while trying to kill ffmpeg: {ex.Message}");
+
                                     // 可能會因為進程已經退出而導致異常，忽略此類異常
                                 }
+                                isCancel = true;
                                 cancellationToken.ThrowIfCancellationRequested();
+                                break;
                             }
 
                             if (File.Exists(progressFilePath))
@@ -156,6 +178,10 @@ namespace utility_app
                             Task.Delay(1000).Wait(); // 非阻塞的延遲
                         }; // while
 
+                        if (isCancel)
+                        {
+                            return false;
+                        }
                         //if (File.Exists(progressFilePath))
                         {
                             //string progressText = File.ReadAllText(progressFilePath);
@@ -187,7 +213,7 @@ namespace utility_app
             {
                 theform.setProgressTitle("影片轉出聲音檔...");
             }));
-            string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");            
+            string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
@@ -203,6 +229,7 @@ namespace utility_app
             }));
             return await Task.Run(() =>
             {
+                bool isCancel = false;
                 using (Process process = Process.Start(startInfo))
                 {
                     try
@@ -212,16 +239,21 @@ namespace utility_app
                         {
                             if (cancellationToken.IsCancellationRequested)
                             {
-                                try
+                                for (int i = 0; i < 5; i++)
                                 {
-                                    process.Kill(); // 終止 ffmpeg 進程
-                                }
-                                catch
-                                {
-                                    // 可能會因為進程已經退出而導致異常，忽略此類異常
+                                    try
+                                    {
+                                        process.Kill(); // 終止 ffmpeg 進程
+                                        process.Dispose();
+                                    }
+                                    catch
+                                    {
+                                    }
                                 }
 
+                                isCancel = true;
                                 cancellationToken.ThrowIfCancellationRequested();
+                                break;
 
                             }
                             Task.Delay(1000).Wait(); // 非阻塞的延遲
@@ -240,11 +272,19 @@ namespace utility_app
                         }
                         //string error = process.StandardError.ReadToEnd();
                         //Console.WriteLine("Error: " + error);
+                        if (isCancel)
+                        {
+                            return false;
+                        }
                     }
                     catch
                     {
                         return false;
                     }
+                }
+                if (isCancel)
+                {
+                    return false;
                 }
                 return true;
             }, cancellationToken);
@@ -303,6 +343,7 @@ namespace utility_app
 
             return await Task.Run(() =>
             {
+                bool isCancel = false;
                 using (Process process = new Process())
                 {
                     process.StartInfo = startInfo;
@@ -333,17 +374,20 @@ namespace utility_app
                         {
                             if (cancellationToken.IsCancellationRequested)
                             {
-                                try
+                                for (int i = 0; i < 5; i++)
                                 {
-                                    process.Kill();
+                                    try
+                                    {
+                                        process.Kill(); // 終止 ffmpeg 進程
+                                        process.Dispose();
+                                    }
+                                    catch
+                                    {
+                                    }
                                 }
-                                catch
-                                {
-                                    // 忽略因進程已經退出而產生的異常
-                                }
-
+                                isCancel = true;
                                 cancellationToken.ThrowIfCancellationRequested();
-
+                                break;
                             }
 
                             long nowPngs = theform.my.glob(targetPath, "*.png").Count();
@@ -369,10 +413,14 @@ namespace utility_app
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Exception: {ex.Message}");
+                        isCancel = true;
                         return false;
                     }
                 }
-
+                if (isCancel)
+                {
+                    return false;
+                }
                 return true;
             }, cancellationToken);
         }
@@ -427,6 +475,7 @@ namespace utility_app
 
             return await Task.Run(() =>
             {
+                bool isCancel = false;
                 using (Process process = new Process())
                 {
                     process.StartInfo = startInfo;
@@ -457,15 +506,20 @@ namespace utility_app
                         {
                             if (cancellationToken.IsCancellationRequested)
                             {
-                                try
+                                for (int i = 0; i < 5; i++)
                                 {
-                                    process.Kill();
+                                    try
+                                    {
+                                        process.Kill(); // 終止 ffmpeg 進程
+                                        process.Dispose();
+                                    }
+                                    catch
+                                    {
+                                    }
                                 }
-                                catch
-                                {
-                                    // 忽略因進程已經退出而產生的異常
-                                }
+                                isCancel = true;
                                 cancellationToken.ThrowIfCancellationRequested();
+                                break;
                             }
                             if (File.Exists(progressFilePath))
                             {
@@ -531,6 +585,10 @@ namespace utility_app
                     theform.setProgress(98);
                     theform.setProgressTitle("高解析度影像與聲音合併完成...");
                 }));
+                if (isCancel)
+                {
+                    return false;
+                }
                 return true;
             }, cancellationToken);
         }

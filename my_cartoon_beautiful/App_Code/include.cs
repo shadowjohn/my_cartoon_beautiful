@@ -530,7 +530,10 @@ namespace utility
             {
                 try
                 {
-                    return b2s(file_get_contents(filePath));
+                    if (is_file(filePath))
+                    {
+                        return b2s(file_get_contents(filePath));
+                    }
                 }
                 catch (IOException ex)
                 {
