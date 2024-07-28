@@ -1,15 +1,8 @@
 ﻿using my_cartoon_beautiful;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -53,11 +46,11 @@ namespace utility_app
             {
                 theform.setProgressTitle("取得總幀數...");
             }));
-            long totalsFrame = theform.my.getMovieTotalFrames(ffmpegBin, sourceFile);
+            long totalsFrame = theform.my.getMovieTotalFrames(workPath, ffmpegBin, sourceFile);
             Console.WriteLine("總幀數: " + totalsFrame.ToString());
             theform.Invoke((MethodInvoker)(() =>
             {
-                theform.setProgressTitle("取得總幀數...:" + totalsFrame.ToString());
+                theform.setProgressTitle("取得總幀數...: " + totalsFrame.ToString());
             }));
 
             string progressFilePath = Path.Combine(workPath, "progress.txt");
@@ -70,14 +63,15 @@ namespace utility_app
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
-                Arguments = $" -y -i \"{sourceFile}\" -vf \"fps=30\" -progress \"{progressFilePath}\" -f image2  \"{workPath}\\source\\%08d.png\" ",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                // -progress \"{progressFilePath}\"
+                Arguments = $" -hwaccel dxva2 -y -i \"{sourceFile}\" -vf \"fps=30\" -f image2  \"{workPath}\\source\\%08d.png\" ",
+                RedirectStandardOutput = false,
+                RedirectStandardError = false,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
 
-            theform.setProgressTitle("開始將影像轉成 png 圖片...");
+            theform.setProgressTitle("影像轉成 png : " + totalsFrame.ToString());
 
             return await Task.Run(() =>
             {
@@ -86,45 +80,65 @@ namespace utility_app
                     // 獲取進度
                     try
                     {
-                        string last_progressText = null;
-                        int same_data_times = 0;
                         bool isCancel = false;
-                        while (!process.HasExited)
+                        while (true) //!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
                             {
                                 try
                                 {
                                     Console.WriteLine("Do kill ffmpeg...");
-                                    for (int i = 0; i < 5; i++)
-                                    {
-                                        try
-                                        {
-                                            process.Kill(); // 終止 ffmpeg 進程
-                                            process.Dispose();
-                                        }
-                                        catch
-                                        {
-                                        }
-                                    }
-
                                     isCancel = true;
+                                    process.Kill(); // 終止 ffmpeg 進程
+                                    process.Dispose();
                                     Console.WriteLine("ffmpeg process killed.");
                                     break;
 
                                 }
                                 catch (Exception ex)
                                 {
-
-                                    Console.WriteLine($"Exception while trying to kill ffmpeg: {ex.Message}");
-
                                     // 可能會因為進程已經退出而導致異常，忽略此類異常
+                                    Console.WriteLine($"Exception while trying to kill ffmpeg: {ex.Message}");
                                 }
                                 isCancel = true;
                                 cancellationToken.ThrowIfCancellationRequested();
                                 break;
                             }
-
+                            try
+                            {
+                                var nowPngs = Convert.ToInt64(theform.my.glob(Path.Combine(workPath, "source"), "*.png").Count());
+                                double p = theform.my.arduino_map(nowPngs, 0, totalsFrame, 0.0, 15.0);
+                                p = (p >= 15) ? 15.0 : p;
+                                theform.Invoke((MethodInvoker)(() =>
+                                {
+                                    if (nowPngs >= totalsFrame)
+                                    {
+                                        nowPngs = totalsFrame;
+                                    }
+                                    theform.setProgressTitle("影像轉成 png: " + nowPngs.ToString() + " / " + totalsFrame.ToString());
+                                    theform.setProgress(p);
+                                }));
+                                if (Math.Abs(totalsFrame - nowPngs) <= 5)
+                                {
+                                    Task.Delay(1000).Wait(); // 非阻塞的延遲
+                                    theform.Invoke((MethodInvoker)(() =>
+                                    {
+                                        if (nowPngs >= totalsFrame)
+                                        {
+                                            nowPngs = totalsFrame;
+                                        }
+                                        theform.setProgressTitle("影像轉成 png: " + nowPngs.ToString() + " / " + totalsFrame.ToString());
+                                        theform.setProgress(p);
+                                    }));
+                                    break;
+                                }
+                                Task.Delay(1000).Wait(); // 非阻塞的延遲
+                            }
+                            catch
+                            {
+                                Task.Delay(1000).Wait(); // 非阻塞的延遲
+                            }
+                            /*
                             if (File.Exists(progressFilePath))
                             {
                                 string progressText = theform.my.readFileWithRetry(progressFilePath, 50, 100).Replace("\r", "").Trim();
@@ -150,14 +164,18 @@ namespace utility_app
                                             isEnd = true;
                                         }
                                     }
+                                    else
+                                    {
+                                        same_data_times = 0;
+                                    }
                                 }
 
                                 for (int i = m.Count() - 1; i >= 0; i--)
                                 {
-                                    Console.WriteLine(m[i]);
                                     if (m[i].Trim() == "progress=end")
                                     {
                                         isEnd = true;
+                                        break;
                                     }
                                     if (theform.my.is_string_like_new(m[i], "frame=%"))
                                     {
@@ -175,13 +193,16 @@ namespace utility_app
                                 }
                                 last_progressText = progressText;
                             }
-                            Task.Delay(1000).Wait(); // 非阻塞的延遲
+                            */
+                            //Thread.Sleep(1000);
+
                         }; // while
 
                         if (isCancel)
                         {
                             return false;
                         }
+
                         //if (File.Exists(progressFilePath))
                         {
                             //string progressText = File.ReadAllText(progressFilePath);
@@ -217,9 +238,9 @@ namespace utility_app
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
-                Arguments = $" -y -i \"{sourceFile}\" -vn \"{wav_file}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                Arguments = $" -hwaccel dxva2 -y -i \"{sourceFile}\" -vn \"{wav_file}\"",
+                RedirectStandardOutput = false,
+                RedirectStandardError = false,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
@@ -330,8 +351,8 @@ namespace utility_app
             {
                 FileName = aiRNVBin,
                 Arguments = $" -i \"{sourcePath}\" -o \"{targetPath}\" -s " + imageScale + " -f png",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                RedirectStandardOutput = false,
+                RedirectStandardError = false,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
@@ -347,7 +368,7 @@ namespace utility_app
                 using (Process process = new Process())
                 {
                     process.StartInfo = startInfo;
-
+                    /*
                     process.OutputDataReceived += (sender, e) =>
                     {
                         if (!string.IsNullOrEmpty(e.Data))
@@ -362,12 +383,13 @@ namespace utility_app
                             Console.WriteLine($"Error: {e.Data}");
                         }
                     };
+                    */
 
                     try
                     {
                         process.Start();
-                        process.BeginOutputReadLine();
-                        process.BeginErrorReadLine();
+                        //process.BeginOutputReadLine();
+                        //process.BeginErrorReadLine();
 
 
                         while (!process.HasExited)
@@ -412,7 +434,7 @@ namespace utility_app
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Exception: {ex.Message}");
+                        Console.WriteLine($"Exception 436: {ex.Message}");
                         isCancel = true;
                         return false;
                     }
@@ -461,9 +483,9 @@ namespace utility_app
             {
                 FileName = ffmpegBin,
                 //-strict experimental
-                Arguments = $" -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{wavFile}\" -progress \"{progressFilePath}\" -c:v libx264 -pix_fmt yuv420p -c:a aac \"{targetFile}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                Arguments = $" -hwaccel dxva2 -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{wavFile}\" -progress \"{progressFilePath}\" -c:v libx264 -pix_fmt yuv420p -c:a aac \"{targetFile}\"",
+                RedirectStandardOutput = false,
+                RedirectStandardError = false,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
@@ -498,8 +520,8 @@ namespace utility_app
                     try
                     {
                         process.Start();
-                        process.BeginOutputReadLine();
-                        process.BeginErrorReadLine();
+                        //process.BeginOutputReadLine();
+                        //process.BeginErrorReadLine();
                         string last_progressText = null;
                         int same_data_times = 0;
                         while (!process.HasExited)
@@ -547,6 +569,10 @@ namespace utility_app
                                             isEnd = true;
                                         }
                                     }
+                                    else
+                                    {
+                                        same_data_times = 0;
+                                    }
                                 }
                                 for (int i = m.Count() - 1; i >= 0; i--)
                                 {
@@ -575,7 +601,7 @@ namespace utility_app
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Exception: {ex.Message}");
+                        Console.WriteLine($"Exception 603: {ex.Message}");
                         return false;
                     }
                 }

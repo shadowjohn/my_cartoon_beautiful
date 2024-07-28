@@ -1,19 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using utility;
-using System.Diagnostics;
-using utility_app;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using utility;
+using utility_app;
 namespace my_cartoon_beautiful
 {
     public partial class Form1 : Form
@@ -177,28 +168,34 @@ namespace my_cartoon_beautiful
             switch (RunOrStop)
             {
                 case "RUN":
-                    btnRun.Text = "轉檔中...";
-                    btnRun.ForeColor = System.Drawing.Color.Red;
-                    progressBar1.Visible = true;
-                    txtProgressLabel.Visible = true;
-                    txtProgress.Visible = true;
-                    button1.Enabled = false;
-                    txtSource.Enabled = false;
-                    button2.Enabled = false;
-                    txtOutput.Enabled = false;
-                    comboBox_ImageScale.Enabled = false;
+                    this.Invoke((MethodInvoker)(() =>
+                    {
+                        btnRun.Text = "轉檔中...";
+                        btnRun.ForeColor = System.Drawing.Color.Red;
+                        progressBar1.Visible = true;
+                        txtProgressLabel.Visible = true;
+                        txtProgress.Visible = true;
+                        button1.Enabled = false;
+                        txtSource.Enabled = false;
+                        button2.Enabled = false;
+                        txtOutput.Enabled = false;
+                        comboBox_ImageScale.Enabled = false;
+                    }));
                     break;
                 case "STOP":
-                    btnRun.Text = "開始轉檔";
-                    btnRun.ForeColor = System.Drawing.Color.Black;
-                    progressBar1.Visible = false;
-                    txtProgressLabel.Visible = false;
-                    txtProgress.Visible = false;
-                    button1.Enabled = true;
-                    txtSource.Enabled = true;
-                    button2.Enabled = true;
-                    txtOutput.Enabled = true;
-                    comboBox_ImageScale.Enabled = true;
+                    this.Invoke((MethodInvoker)(() =>
+                    {
+                        btnRun.Text = "開始轉檔";
+                        btnRun.ForeColor = System.Drawing.Color.Black;
+                        progressBar1.Visible = false;
+                        txtProgressLabel.Visible = false;
+                        txtProgress.Visible = false;
+                        button1.Enabled = true;
+                        txtSource.Enabled = true;
+                        button2.Enabled = true;
+                        txtOutput.Enabled = true;
+                        comboBox_ImageScale.Enabled = true;
+                    }));
                     break;
             }
         }
@@ -246,11 +243,14 @@ namespace my_cartoon_beautiful
                 }
                 //可以開始轉檔了!!?
                 uiRunOrStop("RUN");
-                setProgressTitle("轉檔開始...");
-                setProgress(0.00f);
+                this.Invoke((MethodInvoker)(() =>
+                {
+                    setProgressTitle("轉檔開始...");
+                    setProgress(0.00f);
+                }));
                 string dt = my.date("YmdHis");
                 string workPath = Path.Combine(TMP_PATH, dt);
-
+                
 
                 try
                 {
@@ -263,6 +263,7 @@ namespace my_cartoon_beautiful
                         return;
                     }
                     //將 影片轉 png 
+                    Task.Delay(1000).Wait();
                     cts = new CancellationTokenSource();
                     bool success = await App.step2_sourceFile_to_png(workPath, sourceFile, cts.Token);
                     if (!success)
@@ -274,6 +275,7 @@ namespace my_cartoon_beautiful
                     }
                     //將 影片轉 wav
                     cts = new CancellationTokenSource();
+                    Task.Delay(1000).Wait();
                     success = await App.step3_sourceFile_to_wav(workPath, sourceFile, targetFile, cts.Token);
                     if (!success)
                     {
@@ -284,6 +286,7 @@ namespace my_cartoon_beautiful
                     }
                     //將 原影像 png 用 ai 轉成高解析度
                     cts = new CancellationTokenSource();
+                    Task.Delay(1000).Wait();
                     success = await App.step4_sourcePng_to_aiPng(workPath, cts.Token);
                     if (!success)
                     {
@@ -294,6 +297,7 @@ namespace my_cartoon_beautiful
                     }
                     //將 ai 轉的高解析度影像 png 與 wav 合併輸出成 mp4 
                     cts = new CancellationTokenSource();
+                    Task.Delay(1000).Wait();
                     success = await App.step5_aiPng_to_mp4(workPath, targetFile, cts.Token);
                     if (!success)
                     {
@@ -304,6 +308,7 @@ namespace my_cartoon_beautiful
                     }
 
                     cts = new CancellationTokenSource();
+                    Task.Delay(1000).Wait();
                     success = await App.step6_remove_workPath(workPath, cts.Token);
                     if (!success)
                     {
@@ -360,7 +365,7 @@ namespace my_cartoon_beautiful
 版本：" + PROGRAM_VERSION + @"
 作者：羽山 (https://3wa.tw)
 ";
-            MessageBox.Show(message,"說明",MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(message, "說明", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

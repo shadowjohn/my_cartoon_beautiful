@@ -3,9 +3,10 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -425,7 +426,27 @@ namespace utility
                 return false;
             }
         }
-        public long getMovieTotalFrames(string ffmpegBin, string movieFile)
+        public double ConvertTimeToSeconds(string time)
+        {
+            // 使用 TimeSpan.ParseExact 方法來解析時間字串
+            TimeSpan timeSpan = TimeSpan.ParseExact(time, @"hh\:mm\:ss\.ff", CultureInfo.InvariantCulture);
+
+            // 將 TimeSpan 轉換成總秒數並返回
+            return timeSpan.TotalSeconds;
+        }
+        public string get_between(string data, string s_begin, string s_end)
+        {
+            //http://stackoverflow.com/questions/378415/how-do-i-extract-a-string-of-text-that-lies-between-two-parenthesis-using-net
+            //string a = "abcdefg";
+            //MessageBox.Show(my.get_between(a, "cde", "g"));
+            //return f;
+            string s = data;
+            int start = s.IndexOf(s_begin);
+            string new_s = data.Substring(start + s_begin.Length);
+            int end = new_s.IndexOf(s_end);
+            return s.Substring(start + s_begin.Length, end);
+        }
+        public long getMovieTotalFrames(string workPath, string ffmpegBin, string movieFile)
         {
             if (string.IsNullOrEmpty(movieFile) || !System.IO.File.Exists(movieFile))
             {
@@ -433,13 +454,14 @@ namespace utility
             }
 
             string ffmpegPath = ffmpegBin; // 確保 ffmpeg 在系統 PATH 中或指定其完整路徑
-            string arguments = $" -i \"{movieFile}\" -vf \"fps=30\" -f null -";
+            string arguments = $" -i \"{movieFile}\" -vf \"fps=30\" -report";
 
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
+                WorkingDirectory = workPath,
                 FileName = ffmpegPath,
                 Arguments = arguments,
-                RedirectStandardOutput = true,
+                RedirectStandardOutput = false,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
@@ -449,7 +471,20 @@ namespace utility
             {
                 string output = process.StandardError.ReadToEnd();
                 process.WaitForExit();
-
+                var fp = glob(workPath, "ffmpeg-20*.log");
+                if (fp.Count() >= 1)
+                {
+                    string data = b2s(file_get_contents(fp[0]));
+                    string dt = get_between(data, " Duration: ", ", ").Trim();
+                    Console.WriteLine(data);
+                    Console.WriteLine(dt);
+                    double dt_sec = ConvertTimeToSeconds(dt);
+                    long totalFrames = Convert.ToInt64(dt_sec * 30.0);
+                    unlink(fp[0]);
+                    return totalFrames;
+                }
+                return -1;
+                /*
                 string frameLine = Regex.Match(output, @"frame=\s*(\d+)").Groups[1].Value;
                 if (long.TryParse(frameLine, out long totalFrames))
                 {
@@ -459,7 +494,7 @@ namespace utility
                 {
                     Console.WriteLine("Failed to parse total frames.");
                     return -1; // 解析錯誤
-                }
+                }*/
             }
         }
 
@@ -494,6 +529,7 @@ namespace utility
             };
             return data;
         }
+        
         private byte[] ReadStream(Stream stream, int initialLength)
         {
             if (initialLength < 1)
