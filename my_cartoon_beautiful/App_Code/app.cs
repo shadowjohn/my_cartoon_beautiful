@@ -12,6 +12,7 @@ namespace utility_app
     public class myApp
     {
         Form1 theform;
+        //private bool isNeedStop = false;
         public myApp(Form1 f)
         {
             theform = f;
@@ -64,7 +65,7 @@ namespace utility_app
             {
                 FileName = ffmpegBin,
                 // -progress \"{progressFilePath}\"
-                Arguments = $" -hwaccel dxva2 -y -i \"{sourceFile}\" -vf \"fps=30\" -f image2  \"{workPath}\\source\\%08d.png\" ",
+                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vf \"fps=30\" -f image2  \"{workPath}\\source\\%08d.png\" ",
                 RedirectStandardOutput = false,
                 RedirectStandardError = false,
                 UseShellExecute = false,
@@ -238,7 +239,7 @@ namespace utility_app
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
-                Arguments = $" -hwaccel dxva2 -y -i \"{sourceFile}\" -vn \"{wav_file}\"",
+                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vn \"{wav_file}\"",
                 RedirectStandardOutput = false,
                 RedirectStandardError = false,
                 UseShellExecute = false,
@@ -483,12 +484,16 @@ namespace utility_app
             {
                 FileName = ffmpegBin,
                 //-strict experimental
-                Arguments = $" -hwaccel dxva2 -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{wavFile}\" -progress \"{progressFilePath}\" -c:v libx264 -pix_fmt yuv420p -c:a aac \"{targetFile}\"",
-                RedirectStandardOutput = false,
-                RedirectStandardError = false,
+                // -hwaccel dxva2
+                //libx264
+                // -progress \"{progressFilePath}\" -loglevel quiet
+                Arguments = $" -hwaccel auto -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{wavFile}\" -c:v h264 -pix_fmt yuv420p -acodec aac \"{targetFile}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+            Console.WriteLine(startInfo.Arguments);
 
             theform.Invoke((MethodInvoker)(() =>
             {
@@ -502,26 +507,45 @@ namespace utility_app
                 {
                     process.StartInfo = startInfo;
 
-                    process.OutputDataReceived += (sender, e) =>
+                    /*process.OutputDataReceived += (sender, e) =>
                     {
                         if (!string.IsNullOrEmpty(e.Data))
                         {
                             Console.WriteLine($"Output: {e.Data}");
                         }
                     };
+                    */
+
                     process.ErrorDataReceived += (sender, e) =>
                     {
-                        if (!string.IsNullOrEmpty(e.Data))
+                        if (!string.IsNullOrEmpty(e.Data) && theform.my.is_string_like(e.Data, "frame=")  && theform.my.is_string_like(e.Data, "fps="))
                         {
-                            Console.WriteLine($"Error: {e.Data}");
+                            //Console.WriteLine($"Error: {e.Data}");
+                            string frame = theform.my.get_between(e.Data, "frame= ", " fps=");
+                            if (!string.IsNullOrEmpty(frame))
+                            {
+                                long frames = Convert.ToInt64(frame);
+                                double p = theform.my.arduino_map(frames, 0, totalsPngs, 88.0, 97.0);
+                                p = (p >= 97.0) ? 97.0 : p;
+                                theform.Invoke((MethodInvoker)(() => theform.setProgress(p)));
+                                /*if (frames >= totalsPngs - 1)
+                                {
+                                    isNeedStop = true;
+                                }*/
+                            }
                         }
                     };
 
                     try
                     {
                         process.Start();
-                        //process.BeginOutputReadLine();
-                        //process.BeginErrorReadLine();                        
+                        process.BeginOutputReadLine();
+                        process.BeginErrorReadLine();
+                        // process.HasExited
+                        Task.Delay(1000).Wait(); // 非阻塞的延遲
+                        //Console.WriteLine("is file: " + theform.my.is_file(targetFile));
+                        //Console.WriteLine("is file lock: " + theform.my.isFileLocked(targetFile));
+                        //!theform.my.is_file(targetFile) || (theform.my.is_file(targetFile) && theform.my.isFileLocked(targetFile))
                         while (!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
@@ -538,7 +562,12 @@ namespace utility_app
                                 cancellationToken.ThrowIfCancellationRequested();
                                 break;
                             }
-                            if (File.Exists(progressFilePath))
+                            /*if (isNeedStop)
+                            {
+                                break;
+                            }*/
+                            Task.Delay(1000).Wait(); // 非阻塞的延遲
+                            /*if (File.Exists(progressFilePath))
                             {
                                 string progressText = theform.my.readFileWithRetry(progressFilePath, 50, 100).Replace("\r", "").Trim();
 
@@ -550,7 +579,7 @@ namespace utility_app
 
                                 bool isEnd = false;
                                 var m = theform.my.explode("\n", progressText);
-                                
+
                                 for (int i = m.Count() - 1; i >= 0; i--)
                                 {
                                     if (m[i].Trim() == "progress=end")
@@ -570,10 +599,9 @@ namespace utility_app
                                 {
                                     break;
                                 }
-                                
-                            }
-                            Task.Delay(1000).Wait(); // 非阻塞的延遲
 
+                            }*/
+                            //Task.Delay(1000).Wait(); // 非阻塞的延遲
                         }
                     }
                     catch (Exception ex)

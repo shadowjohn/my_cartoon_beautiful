@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace utility
 {
@@ -529,7 +530,18 @@ namespace utility
             };
             return data;
         }
-        
+        public bool isFileLocked(string filename)
+        {
+            try
+            {
+                string fpath = filename;
+                FileStream fs = File.OpenWrite(fpath);
+                fs.Close();
+                return false;
+            }
+
+            catch { return true; }
+        }
         private byte[] ReadStream(Stream stream, int initialLength)
         {
             if (initialLength < 1)
@@ -571,10 +583,11 @@ namespace utility
                         return b2s(file_get_contents(filePath));
                     }
                 }
-                catch (IOException ex)
+                catch
                 {
                     //Console.WriteLine($"IOException: {ex.Message}. Retrying in {delayMilliseconds}ms...");
-                    Thread.Sleep(delayMilliseconds);
+                    //Thread.Sleep(delayMilliseconds);
+                    Task.Delay(delayMilliseconds).Wait();
                 }
             }
 

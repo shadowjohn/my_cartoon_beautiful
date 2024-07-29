@@ -249,11 +249,13 @@ namespace my_cartoon_beautiful
                     setProgress(0.00f);
                 }));
                 string dt = my.date("YmdHis");
+                //dt = "20240729005107";
                 string workPath = Path.Combine(TMP_PATH, dt);
-                
+
 
                 try
                 {
+
                     //檢查與建立工作目錄...
                     if (!App.step1_checkWorkPath(workPath))
                     {
@@ -295,6 +297,7 @@ namespace my_cartoon_beautiful
                         cts = null;
                         return;
                     }
+
                     //將 ai 轉的高解析度影像 png 與 wav 合併輸出成 mp4 
                     cts = new CancellationTokenSource();
                     Task.Delay(1000).Wait();

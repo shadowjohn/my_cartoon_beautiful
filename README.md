@@ -47,7 +47,7 @@
 <br>
 <h3>程式相依套件：</h3>
 <ul>
-  <li>1. ffmpeg windows binary static (ffmpeg version N-81947-gc45ba26)</li>
+  <li>1. ffmpeg windows binary static (ffmpeg version N-116451-ge7d3ff8dcd-20240729)</li>
   <li>2. realesrgan-ncnn-vulkan (v0.2.0-windows)</li>
   <li>3. windows .net framework 4.6.2</li>
 </ul>
