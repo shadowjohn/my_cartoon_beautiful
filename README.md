@@ -55,11 +55,18 @@
 <h3>版本說明：</h3>
 V0.01 版 (2024-07-28)：<br>
 初版簽入<br>
-通過微軟掃毒：https://www.microsoft.com/en-us/wdsi/submission/48aea697-2456-458d-bbfa-bd442e6763f2
+通過微軟掃毒：
+https://www.microsoft.com/en-us/wdsi/submission/7690a33f-7234-4f4d-87cf-a86ae0e42491
 
 <br>
 <h3>參考資料：</h3>
 <ul>
   <li>1. ffmpeg: https://www.ffmpeg.org/download.html</li>
   <li>2. realesrgan-ncnn-vulkan: https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan</li>
+</ul>
+
+<br>
+<h3>待處理：</h3>
+<ul>
+	<li>1、轉檔時要有開始、結束時間</li>
 </ul>
