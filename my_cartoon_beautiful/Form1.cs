@@ -13,7 +13,7 @@ namespace my_cartoon_beautiful
         public myinclude my = new myinclude();
         myApp App = null;
         static string PROGRAM_NAME = "影片高解析度小程式";
-        static string PROGRAM_VERSION = "0.02";
+        static string PROGRAM_VERSION = "0.03";
         public string PWD = "";
         static string TMP_PATH = "";
         //用來取消工作

@@ -36,7 +36,7 @@
 
 ## 執行畫面
 ![執行畫面](snapshot/s1.png)
-![執行畫面](snapshot/s3.png)
+![執行畫面](snapshot/s4.png)
 
 ## 影片產出範例
 ![影片產出範例](snapshot/s2.png)
@@ -72,8 +72,8 @@ V0.02 版 (2024-08-04)：更新內容
 通過微軟掃毒：[掃毒結果] https://www.microsoft.com/en-us/wdsi/submission/b919607d-3279-4575-b904-d457189df292
 
 V0.03 版 (2024-08-04)：更新內容
- 1. (2024-08-04 Done) 【V0.03】聲音格式：AAC libmp3lame OGG 原音可選擇)
-
+ 1. 12. (2024-08-04 Done) 【V0.03】聲音格式：AAC libmp3lame OGG 原音可選擇
+通過微軟掃毒：[掃毒結果] https://www.microsoft.com/en-us/wdsi/submission/3981004f-8c25-45b6-b35e-f5bf906deadb
 	
 ## 參考資料
 1. [ffmpeg](https://www.ffmpeg.org/download.html)
