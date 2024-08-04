@@ -38,7 +38,7 @@
 ![執行畫面](snapshot/s1.png)
 
 ## 影片產出範例
-![影片產出範例](snapshot/s2.png)
+![影片產出範例](snapshot/s3.png)
 [範例瀏覽](https://github.com/shadowjohn/my_cartoon_beautiful/tree/main/example)
 
 ## 使用方法
