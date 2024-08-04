@@ -233,7 +233,7 @@ namespace utility_app
             }
             theform.Invoke((MethodInvoker)(() =>
             {
-                theform.setProgressTitle("影片轉出聲音檔...");
+                theform.setProgressTitle("影片分離聲音...");
             }));
             string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
             ProcessStartInfo startInfo = new ProcessStartInfo
@@ -247,7 +247,7 @@ namespace utility_app
             };
             theform.Invoke((MethodInvoker)(() =>
             {
-                theform.setProgressTitle("開始將影片轉出聲音檔...");
+                theform.setProgressTitle("開始將影片分離聲音...");
             }));
             return await Task.Run(() =>
             {
@@ -289,7 +289,7 @@ namespace utility_app
                             theform.Invoke((MethodInvoker)(() =>
                             {
                                 theform.setProgress(18);
-                                theform.setProgressTitle("影片轉出聲音檔完成");
+                                theform.setProgressTitle("影片分離出聲音完成");
                             }));
                         }
                         //string error = process.StandardError.ReadToEnd();

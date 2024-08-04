@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Reflection.Emit;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -46,12 +47,39 @@ namespace my_cartoon_beautiful
                 notifyIcon1.ShowBalloonTip(1000);
             }
         }
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
 
+            // 檢查是否有正在進行的轉檔過程
+            if (cts != null && !cts.Token.IsCancellationRequested)
+            {
+                // 提示使用者是否要強制結束
+                var result = MessageBox.Show("目前正在進行轉檔，是否確定要強制結束？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                if (result == DialogResult.No)
+                {
+                    // 如果使用者選擇不結束，取消關閉操作
+                    e.Cancel = true;
+                    return;
+                }
+                else
+                {
+                    // 如果使用者選擇結束，取消轉檔過程
+                    cts.Cancel();
+                }
+            }
+        }
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
+            // 隱藏在任務欄中的圖示
             ShowInTaskbar = false;
+
+            // 隱藏並釋放通知圖示
             notifyIcon1.Visible = false;
             notifyIcon1.Dispose();
+
+            // 執行退出邏輯
+            exit();
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -105,6 +133,14 @@ namespace my_cartoon_beautiful
 
             // preset x 2
             comboBox_ImageScale.SelectedIndex = 0;
+
+            // 設定邊框樣式
+            labelShowLog.AutoSize = true;
+            labelShowLog.BorderStyle = BorderStyle.FixedSingle;
+            labelShowLog.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+
+            // 使用 Padding 調整內邊距
+            labelShowLog.Padding = new Padding(3, 3, 1, 3); // 上下左右各 10 像素的內邊距
         }
 
         private void exit()
@@ -112,7 +148,11 @@ namespace my_cartoon_beautiful
             ShowInTaskbar = false;
             notifyIcon1.Visible = false;
             notifyIcon1.Dispose();
-            Environment.Exit(1);
+            try
+            {
+                Environment.Exit(1);
+            }
+            catch { }
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -327,7 +367,7 @@ namespace my_cartoon_beautiful
                         cts = null;
                         et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                         duration = et - st;
-                        my.grid_updateRow(logDataGridView, 0, new string[] { "步驟1", "檢查與建立工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "否" });
+                        my.grid_updateRow(logDataGridView, 0, new string[] { "步驟1", "檢查與建立工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
                         return;
                     }
                     //將 影片轉 png 
@@ -349,7 +389,7 @@ namespace my_cartoon_beautiful
                         cts = null;
                         et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                         duration = et - st;
-                        my.grid_updateRow(logDataGridView, 1, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "否" });
+                        my.grid_updateRow(logDataGridView, 1, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
                         return;
                     }
                     //將 影片轉 wav
@@ -360,7 +400,7 @@ namespace my_cartoon_beautiful
                     st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
 
                     st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    my.grid_addRow(logDataGridView, new string[] { "步驟3", "將 影片轉 wav", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
+                    my.grid_addRow(logDataGridView, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
 
                     cts = new CancellationTokenSource();
                     Task.Delay(1000).Wait();
@@ -372,14 +412,14 @@ namespace my_cartoon_beautiful
                         cts = null;
                         et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                         duration = et - st;
-                        my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片轉 wav", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "否" });
+                        my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
                         return;
                     }
                     //將 原影像 png 用 ai 轉成高解析度
 
                     et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                     duration = et - st;
-                    my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片轉 wav", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
+                    my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
                     st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                     my.grid_addRow(logDataGridView, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
                     cts = new CancellationTokenSource();
@@ -392,7 +432,7 @@ namespace my_cartoon_beautiful
                         cts = null;
                         et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                         duration = et - st;
-                        my.grid_updateRow(logDataGridView, 3, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "否" });
+                        my.grid_updateRow(logDataGridView, 3, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
                         return;
                     }
 
@@ -414,7 +454,7 @@ namespace my_cartoon_beautiful
                         cts = null;
                         et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                         duration = et - st;
-                        my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 png 與 wav 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString(), my.date("Y-m-d H:i:s", et.ToString()), "否" });
+                        my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 png 與 wav 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString(), my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
                         return;
                     }
 
@@ -512,5 +552,7 @@ namespace my_cartoon_beautiful
                 logDataGridView.Visible = false;
             }
         }
+
+
     }
 }
