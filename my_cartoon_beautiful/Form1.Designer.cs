@@ -241,11 +241,13 @@
             this.comboBox_soundKind.Font = new System.Drawing.Font("微軟正黑體", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.comboBox_soundKind.FormattingEnabled = true;
             this.comboBox_soundKind.Items.AddRange(new object[] {
-            "MP3",
+            "AAC",
+            "libmp3lame",
+            "OGG",
             "原音"});
             this.comboBox_soundKind.Location = new System.Drawing.Point(530, 236);
             this.comboBox_soundKind.Name = "comboBox_soundKind";
-            this.comboBox_soundKind.Size = new System.Drawing.Size(121, 48);
+            this.comboBox_soundKind.Size = new System.Drawing.Size(225, 48);
             this.comboBox_soundKind.TabIndex = 17;
             // 
             // Form1

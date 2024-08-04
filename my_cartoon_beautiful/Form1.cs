@@ -134,7 +134,7 @@ namespace my_cartoon_beautiful
             // preset x 2
             comboBox_ImageScale.SelectedIndex = 0;
 
-            // default mp3
+            // default aac
             comboBox_soundKind.SelectedIndex = 0;
 
             // 設定邊框樣式

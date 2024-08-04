@@ -27,12 +27,12 @@
 
 ## 版本資訊
 - 最初開發日期：2024-07-28
-- 最後更新日期：2024-07-28
-- 版本：V0.01
+- 最後更新日期：2024-08-04
+- 版本：V0.03 beta版
 
 ## 下載位置
-- 主程式(V0.02 beta版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.02/my_cartoon_beautiful.zip)
-- 主程式(V0.01 穩定版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.01/my_cartoon_beautiful.zip)
+- 主程式(V0.03 beta版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.03/my_cartoon_beautiful.zip)
+- 主程式(V0.02 穩定版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.02/my_cartoon_beautiful.zip)
 
 ## 執行畫面
 ![執行畫面](snapshot/s1.png)
@@ -68,9 +68,13 @@ V0.02 版 (2024-08-04)：更新內容
  8. (2024-08-04 Done) 【V0.02】最後加上 總時間 結算時間
  9. (2024-08-04 Done) 【V0.02】讓使用者自行指定原音，或是轉 mp3 可減少檔案大小
 10. (2024-08-04 Done) 【V0.02】結束時的 MessageBox 置頂
-11. (2024-08-04 Done) 【V0.02】滑鼠經過 ㊉ ㊀ 會變成手指指標
+11. (2024-08-04 Done) 【V0.02】滑鼠經過 ㊉ ㊀ 會變成手指指標	
 通過微軟掃毒：[掃毒結果] https://www.microsoft.com/en-us/wdsi/submission/b919607d-3279-4575-b904-d457189df292
 
+V0.03 版 (2024-08-04)：更新內容
+ 1. (2024-08-04 Done) 【V0.03】聲音格式：AAC libmp3lame OGG 原音可選擇)
+
+	
 ## 參考資料
 1. [ffmpeg](https://www.ffmpeg.org/download.html)
 2. [realesrgan-ncnn-vulkan](https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan)
@@ -87,4 +91,4 @@ V0.02 版 (2024-08-04)：更新內容
  9. (2024-08-04 Done) 【V0.02】讓使用者自行指定原音，或是轉 mp3 可減少檔案大小
 10. (2024-08-04 Done) 【V0.02】結束時的 MessageBox 置頂
 11. (2024-08-04 Done) 【V0.02】滑鼠經過 ㊉ ㊀ 會變成手指指標
-
+12. (2024-08-04 Done) 【V0.03】聲音格式：AAC libmp3lame OGG 原音可選擇

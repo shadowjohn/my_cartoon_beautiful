@@ -180,13 +180,21 @@ namespace utility_app
 
             string soundkind = theform.comboBox_soundKind.Text.Trim();
             Console.WriteLine("soundkind: " + soundkind);
-            string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
-            string mp3_param = "";
-            switch (soundkind)
+            string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
+            string sound_param = "";
+            switch (soundkind.ToUpper())
             {
-                case "MP3":
+                case "AAC":
+                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
+                    sound_param = "-c:a aac -b:a 192k";
+                    break;                
+                case "LIBMP3LAME":
                     wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
-                    mp3_param = "-c:a libmp3lame -q:a 2";
+                    sound_param = "-c:a libmp3lame -q:a 4";
+                    break;
+                case "OGG":
+                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".ogg");
+                    sound_param = "-c:a libvorbis -q:a 4";
                     break;
                 default:
                     // 原音
@@ -197,7 +205,7 @@ namespace utility_app
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
-                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vn {mp3_param} \"{wav_file}\"",
+                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vn {sound_param} \"{wav_file}\"",
                 RedirectStandardOutput = false,
                 RedirectStandardError = false,
                 UseShellExecute = false,
@@ -492,12 +500,19 @@ namespace utility_app
                 theform.setProgressTitle("高解析度影像與聲音檔合併輸出...");
             }));
 
-            string soundkind = theform.comboBox_soundKind.Text.Trim().ToUpper();
+            string soundkind = theform.comboBox_soundKind.Text.Trim();
             string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
-            switch (soundkind)
+
+            switch (soundkind.ToUpper())
             {
-                case "MP3":
+                case "AAC":
+                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
+                    break;                
+                case "LIBMP3LAME":
                     wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
+                    break;
+                case "OGG":
+                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".ogg");
                     break;
                 default:
                     // 原音
