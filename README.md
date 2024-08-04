@@ -35,6 +35,7 @@
 - 主程式(V0.01 穩定版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.01/my_cartoon_beautiful.zip)
 
 ## 執行畫面
+![執行畫面](snapshot/s1.png)
 ![執行畫面](snapshot/s3.png)
 
 ## 影片產出範例
