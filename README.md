@@ -1,72 +1,68 @@
 # my_cartoon_beautiful
 我的影片清晰機，可以把老影片變高解析度的好工具
 
-<h3>開發動機：</h3>
-　　前陣子在網路上發現 https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan
-這個可以針對卡通圖片變成高解析度圖片的 project，產出的品質相當好，覺得可以整合加以利用。<br>
-轉檔速度不是很快，需要有點耐心^^...<br>
-有較好的顯卡GPU才能加快速度<br>
+## 開發動機
+前陣子在網路上發現 [Real-ESRGAN-ncnn-vulkan](https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan) 這個可以針對卡通圖片變成高解析度圖片的 project，產出的品質相當好，覺得可以整合加以利用。
 
-　　想法如下：<br>
-	<ul>
-		<li>1. 用 ffmpeg 把影片 → 單張圖片 (一秒30幀)</li>
-		<li>2. 用 ffmpeg 把影片輸出聲音 (wav)</li>
-		<li>3. 用 Real-ESRGAN-ncnn-vulkan 把第 1 步驟作出的圖片，轉成高解析度圖片</li>
-		<li>4. 用 ffmpeg 把高解析度圖片、wav檔合併為新影片</li>
-		<li>5. 刪除處理過程的暫存檔</li>
-		<li>6. 將以上步驟作成 C# 小程式</li>
-	</ul>
-	<br>
-　　最近在練習 C# 單機程式開發，當作練習作業
-<h3>作者：羽山秋人 ( https://3wa.tw/ )</h3>
-<h3>信箱：<a href="mailto:linainverseshadow@gmail.com">linainverseshadow@gmail.com</a></h3>
-<h3>版權：完全免費的 MIT-License</h3>
-<h3>最初開發日期：2024-07-28</h3>
-<h3>最後更新日期：2024-07-28</h3>
-<h3>版本：V0.01</h3>
-<h3>下載位置：</h3>
-1. 主程式(V0.01 beta版)：<a href="https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.01/my_cartoon_beautiful.zip">https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.01/my_cartoon_beautiful.zip</a>
-<br>
-<img src="snapshot/s1.png">
-<br>
-<center>執行畫面</center>
-<br>
-<img src="snapshot/s2.png">
-<br>
-<center>影片產出範例</center>
-<a href="https://github.com/shadowjohn/my_cartoon_beautiful/tree/main/example" target="_blank">範例瀏覽</a>
-<br>
-<br>
-<h3>使用方法：</h3>
-<ul>
-  <li>1. 選擇來源影像</li>
-  <li>2. 選擇要存在哪</li>
-  <li>3. 選擇影像放大倍數 x2 x3 x4 (越大越久...)</li>
-  <li>4. 按下開始轉檔，等待成果</li>
-</ul>
-<br>
-<h3>程式相依套件：</h3>
-<ul>
-  <li>1. ffmpeg windows binary static (ffmpeg version N-116451-ge7d3ff8dcd-20240729)</li>
-  <li>2. realesrgan-ncnn-vulkan (v0.2.0-windows)</li>
-  <li>3. windows .net framework 4.6.2</li>
-</ul>
-<br>
-<h3>版本說明：</h3>
-V0.01 版 (2024-07-28)：<br>
-初版簽入<br>
-通過微軟掃毒：
-https://www.microsoft.com/en-us/wdsi/submission/7690a33f-7234-4f4d-87cf-a86ae0e42491
+轉檔速度不是很快，需要有點耐心^^... 有較好的顯卡GPU才能加快速度。
 
-<br>
-<h3>參考資料：</h3>
-<ul>
-  <li>1. ffmpeg: https://www.ffmpeg.org/download.html</li>
-  <li>2. realesrgan-ncnn-vulkan: https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan</li>
-</ul>
+想法如下：
+1. 用 ffmpeg 把影片 → 單張圖片 (一秒30幀)
+2. 用 ffmpeg 把影片輸出聲音 (wav)
+3. 用 Real-ESRGAN-ncnn-vulkan 把第 1 步驟作出的圖片，轉成高解析度圖片
+4. 用 ffmpeg 把高解析度圖片、wav檔合併為新影片
+5. 刪除處理過程的暫存檔
+6. 將以上步驟作成 C# 小程式
 
-<br>
-<h3>待處理：</h3>
-<ul>
-	<li>1、轉檔時要有開始、結束時間</li>
-</ul>
+最近在練習 C# 單機程式開發，當作練習作業。
+
+## 作者
+羽山秋人 ( [https://3wa.tw/](https://3wa.tw/) )
+
+## 聯絡方式
+信箱：<a href="mailto:linainverseshadow@gmail.com">linainverseshadow@gmail.com</a>
+
+## 版權
+完全免費的 MIT-License
+
+## 版本資訊
+- 最初開發日期：2024-07-28
+- 最後更新日期：2024-07-28
+- 版本：V0.01
+
+## 下載位置
+- 主程式(V0.01 beta版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.01/my_cartoon_beautiful.zip)
+
+## 執行畫面
+![執行畫面](snapshot/s1.png)
+
+## 影片產出範例
+![影片產出範例](snapshot/s2.png)
+[範例瀏覽](https://github.com/shadowjohn/my_cartoon_beautiful/tree/main/example)
+
+## 使用方法
+1. 選擇來源影像
+2. 選擇要存在哪
+3. 選擇影像放大倍數 x2 x3 x4 (越大越久...)
+4. 按下開始轉檔，等待成果
+
+## 程式相依套件
+1. ffmpeg windows binary static (ffmpeg version N-116451-ge7d3ff8dcd-20240729)
+2. realesrgan-ncnn-vulkan (v0.2.0-windows)
+3. windows .net framework 4.6.2
+
+## 版本說明
+V0.01 版 (2024-07-28)：初版簽入
+通過微軟掃毒：[掃毒結果](https://www.microsoft.com/en-us/wdsi/submission/7690a33f-7234-4f4d-87cf-a86ae0e42491)
+
+## 參考資料
+1. [ffmpeg](https://www.ffmpeg.org/download.html)
+2. [realesrgan-ncnn-vulkan](https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan)
+
+## 待處理
+1. 【V0.02】轉檔時，每個步驟有開始、結束時間
+2. (2024-08-03 Done) 【V0.02】自動切換 h264 或 h264_nvenc
+3. (2024-08-03 Done) 【V0.02】轉檔時，可以選擇是否要保留暫存檔
+4. 【V0.02】在處理 step4_sourcePng_to_aiPng ，先判斷是否有重複檔案，有的話就不處理，重複檔案用 md5checksum 檢查
+5. 【V0.02】轉檔過程時，直接按 X 離開，還在轉檔的 ffmpeg 並沒有結束
+

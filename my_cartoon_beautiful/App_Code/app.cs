@@ -480,6 +480,8 @@ namespace utility_app
             }));
             await Task.Delay(1000); // 使用非阻塞的延遲
 
+            string codec = (theform.my.checkNvenc(ffmpegBin)) ? "h264_nvenc" : "h264";
+
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
@@ -487,7 +489,7 @@ namespace utility_app
                 // -hwaccel dxva2
                 //libx264
                 // -progress \"{progressFilePath}\" -loglevel quiet
-                Arguments = $" -hwaccel auto -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{wavFile}\" -c:v h264 -pix_fmt yuv420p -acodec aac \"{targetFile}\"",
+                Arguments = $" -hwaccel auto -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{wavFile}\" -c:v \"{codec}\" -pix_fmt yuv420p -acodec aac \"{targetFile}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -518,7 +520,7 @@ namespace utility_app
 
                     process.ErrorDataReceived += (sender, e) =>
                     {
-                        if (!string.IsNullOrEmpty(e.Data) && theform.my.is_string_like(e.Data, "frame=")  && theform.my.is_string_like(e.Data, "fps="))
+                        if (!string.IsNullOrEmpty(e.Data) && theform.my.is_string_like(e.Data, "frame=") && theform.my.is_string_like(e.Data, "fps="))
                         {
                             //Console.WriteLine($"Error: {e.Data}");
                             string frame = theform.my.get_between(e.Data, "frame= ", " fps=");

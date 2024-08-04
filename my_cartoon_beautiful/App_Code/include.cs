@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,10 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Xml;
+using System.Xml.Linq;
+
 
 namespace utility
 {
@@ -94,24 +99,12 @@ namespace utility
         }
         public string implode(string keyword, ConcurrentDictionary<int, string> arrays)
         {
-            string[] tmp = new String[arrays.Keys.Count];
-            int i = 0;
-            foreach (int k in arrays.Keys)
-            {
-                tmp[i++] = arrays[k];
-            }
-            return string.Join(keyword, tmp);
+            return string.Join(keyword, arrays.Values);
         }
 
         public string implode(string keyword, ConcurrentDictionary<string, string> arrays)
         {
-            string[] tmp = new String[arrays.Keys.Count];
-            int i = 0;
-            foreach (string k in arrays.Keys)
-            {
-                tmp[i++] = arrays[k];
-            }
-            return string.Join(keyword, tmp);
+            return string.Join(keyword, arrays.Values);
         }
         public string basename(string path)
         {
@@ -152,8 +145,20 @@ namespace utility
         }
         public List<string> natsort(List<string> data)
         {
-            //自然排序法
-            return natsort(data.ToArray()).ToList();
+            // 自然排序法
+            Func<string, object> convert = str =>
+            {
+                try { return int.Parse(str); }
+                catch { return str; }
+            };
+            data.Sort((x, y) =>
+            {
+                var xParts = Regex.Split(x.Replace(" ", ""), "([0-9]+)").Select(convert);
+                var yParts = Regex.Split(y.Replace(" ", ""), "([0-9]+)").Select(convert);
+                int result = new EnumerableComparer<object>().Compare(xParts, yParts);
+                return result != 0 ? result : x.Length.CompareTo(y.Length);
+            });
+            return data;
         }
         public string[] natsort(string[] data)
         {
@@ -404,25 +409,27 @@ namespace utility
         }
         public bool deltree(string target_dir)
         {
-            //From : https://dotblogs.com.tw/grepu9/2013/03/20/98267
             try
             {
-                bool result = false;
-                string[] files = Directory.GetFiles(target_dir);
-                string[] dirs = Directory.GetDirectories(target_dir);
-                foreach (string file in files)
+                Stack<string> dirs = new Stack<string>(new[] { target_dir });
+
+                while (dirs.Count > 0)
                 {
-                    File.SetAttributes(file, FileAttributes.Normal);
-                    File.Delete(file);
+                    string currentDir = dirs.Pop();
+                    foreach (string file in Directory.GetFiles(currentDir))
+                    {
+                        File.SetAttributes(file, FileAttributes.Normal);
+                        File.Delete(file);
+                    }
+                    foreach (string dir in Directory.GetDirectories(currentDir))
+                    {
+                        dirs.Push(dir);
+                    }
+                    Directory.Delete(currentDir, false);
                 }
-                foreach (string dir in dirs)
-                {
-                    deltree(dir);
-                }
-                Directory.Delete(target_dir, false);
-                return result;
+                return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -447,7 +454,30 @@ namespace utility
             int end = new_s.IndexOf(s_end);
             return s.Substring(start + s_begin.Length, end);
         }
-        public long getMovieTotalFrames(string workPath, string ffmpegBin, string movieFile)
+        public bool checkNvenc(string ffmpegBin)
+        {
+            // 自動選擇 h264 或 h264_nvenc 
+            try
+            {
+                Process process = new Process();
+                process.StartInfo.FileName = ffmpegBin;
+                process.StartInfo.Arguments = "-hide_banner -encoders";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+
+                string output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit();
+
+                return output.Contains("h264_nvenc");
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        } // 自動選擇 h264 或 h264_nvenc 
+        public long getMovieTotalFrames(string workPath, string ffmpegBin, string movieFile) // 取得影片有多少幀
         {
             if (string.IsNullOrEmpty(movieFile) || !System.IO.File.Exists(movieFile))
             {
@@ -572,6 +602,121 @@ namespace utility
             Array.Copy(buffer, bytes, read);
             return bytes;
         }
+        public void grid_init(DataGridView g, string json_columns)
+        {
+            json_columns = json_columns.Trim();
+
+            // 去掉 JSON 字串的頭尾方括號和大括號
+            string trimmedJson = json_columns.Trim('[', ']');
+            trimmedJson = trimmedJson.Replace("\r", "").Replace(" ", "").Trim();
+            Console.WriteLine(trimmedJson);
+            // 分割每一組
+            string[] lines = trimmedJson.Trim().Split(new string[] { "\n" }, StringSplitOptions.None);
+
+            foreach (string line in lines)
+            {
+
+                // 解析欄位屬性
+                string[] attributePairs = line.Trim('{', '}', ',').Trim('"').Split(new string[] { "\",\"" }, StringSplitOptions.None);
+                Dictionary<string, string> attributeDict = new Dictionary<string, string>();
+                foreach (string pair in attributePairs)
+                {
+                    string[] attributeKeyValue = pair.Split(new string[] { "\":\"" }, StringSplitOptions.None);
+                    attributeDict[attributeKeyValue[0].Trim()] = attributeKeyValue[1].Trim();
+                    Console.WriteLine(attributeKeyValue[0].Trim() + ":" + attributeKeyValue[1].Trim());
+                }
+
+                // 使用欄位名稱和屬性來建立 DataGridViewColumn
+                //p.Name;
+                //Console.WriteLine(item.ToString());
+                //Console.WriteLine(p.Name);
+                //Console.WriteLine(p.Value);                
+                string id = attributeDict["id"].ToString();
+                string key = attributeDict["id"].ToString();
+                switch (attributeDict["columnKind"].ToString())
+                {
+                    case "text":
+                        Console.WriteLine(attributeDict["name"].ToString());
+                        g.Columns.Add(new DataGridViewTextBoxColumn
+                        {
+                            DataPropertyName = id,
+                            Name = id,
+                            HeaderText = attributeDict["name"].ToString(),
+                            Width = Convert.ToInt32(attributeDict["width"]),
+                            Visible = Convert.ToBoolean(attributeDict["display"])
+                        });
+                        g.Columns[key].DefaultCellStyle.Font = new Font("@Fixedsys", 14); //標題字型大小
+                        switch (attributeDict["cellAlign"].ToString())
+                        {
+                            case "left":
+                                g.Columns[key].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+                                break;
+                            case "center":
+                                g.Columns[key].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                                break;
+                            case "right":
+                                g.Columns[key].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                                break;
+                        }
+                        g.Columns[key].SortMode = DataGridViewColumnSortMode.NotSortable;
+                        g.Columns[key].HeaderCell.Style.Font = new Font("微軟正黑體", 12); //標題字型大小
+                        switch (attributeDict["headerAlign"].ToString())
+                        {
+                            case "left":
+                                g.Columns[key].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+                                break;
+                            case "center":
+                                g.Columns[key].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                                break;
+                            case "right":
+                                g.Columns[key].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
+                                break;
+                        }
+                        break;
+                    case "picture":
+                        //From : https://www.codeproject.com/Questions/729186/how-to-insert-PictureBox-in-dataGridView-using-Csh
+                        var d = new DataGridViewImageColumn();
+                        d.Name = id;
+                        d.DataPropertyName = id;
+                        d.Width = Convert.ToInt32(attributeDict["width"]);
+                        d.Visible = Convert.ToBoolean(attributeDict["display"]);
+                        d.HeaderText = attributeDict["name"].ToString();
+                        switch (attributeDict["headerAlign"].ToString())
+                        {
+                            case "left":
+                                d.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+                                break;
+                            case "center":
+                                d.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                                break;
+                            case "right":
+                                d.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
+                                break;
+                        }
+                        d.HeaderCell.Style.Font = new Font("微軟正黑體", 12); //標題字型大小
+                        d.SortMode = DataGridViewColumnSortMode.NotSortable;
+                        g.Columns.Add(d);
+
+                        break;
+                }
+                //設定標題
+            }
+        }
+
+        public void autoResizeColumns(DataGridView dgv)
+        {
+            foreach (DataGridViewColumn column in dgv.Columns)
+            {
+                column.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            }
+
+            for (int i = 0; i < dgv.Columns.Count; i++)
+            {
+                int colWidth = dgv.Columns[i].Width;
+                dgv.Columns[i].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                dgv.Columns[i].Width = colWidth;
+            }
+        }
         public string readFileWithRetry(string filePath, int maxRetries = 50, int delayMilliseconds = 100)
         {
             for (int i = 0; i < maxRetries; i++)
@@ -593,6 +738,107 @@ namespace utility
 
             Console.WriteLine("Failed to read the file after several retries.");
             return "";
+        }
+
+        public void grid_addRow(DataGridView logDataGridView, string[] strings)
+        {
+            if (logDataGridView == null)
+            {
+                throw new ArgumentNullException(nameof(logDataGridView));
+            }
+
+            if (strings == null)
+            {
+                throw new ArgumentNullException(nameof(strings));
+            }
+
+            if (logDataGridView.ColumnCount != strings.Length)
+            {
+                throw new ArgumentException("The number of elements in the strings array must match the number of columns in the DataGridView.");
+            }
+
+            if (logDataGridView.InvokeRequired)
+            {
+                logDataGridView.Invoke(new Action(() => logDataGridView.Rows.Add(strings)));
+            }
+            else
+            {
+                logDataGridView.Rows.Add(strings);
+            }
+        }
+        public void grid_updateRow(DataGridView logDataGridView, int rowIndex, string[] strings)
+        {
+            if (logDataGridView == null)
+            {
+                throw new ArgumentNullException(nameof(logDataGridView));
+            }
+
+            if (strings == null)
+            {
+                throw new ArgumentNullException(nameof(strings));
+            }
+
+            if (rowIndex < 0 || rowIndex >= logDataGridView.Rows.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(rowIndex), "Row index is out of range.");
+            }
+
+            if (logDataGridView.ColumnCount != strings.Length)
+            {
+                throw new ArgumentException("The number of elements in the strings array must match the number of columns in the DataGridView.");
+            }
+
+            if (logDataGridView.InvokeRequired)
+            {
+                logDataGridView.Invoke(new Action(() =>
+                {
+                    for (int i = 0; i < strings.Length; i++)
+                    {
+                        logDataGridView.Rows[rowIndex].Cells[i].Value = strings[i];
+                    }
+                }));
+            }
+            else
+            {
+                for (int i = 0; i < strings.Length; i++)
+                {
+                    logDataGridView.Rows[rowIndex].Cells[i].Value = strings[i];
+                }
+            }
+        }
+        public string[] grid_getRow(DataGridView logDataGridView, int rowIndex)
+        {
+            if (logDataGridView == null)
+            {
+                throw new ArgumentNullException(nameof(logDataGridView));
+            }
+
+            if (rowIndex < 0 || rowIndex >= logDataGridView.Rows.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(rowIndex), "Row index is out of range.");
+            }
+
+            string[] rowData = new string[logDataGridView.ColumnCount];
+
+            if (logDataGridView.InvokeRequired)
+            {
+                logDataGridView.Invoke(new Action(() =>
+                {
+                    for (int i = 0; i < logDataGridView.ColumnCount; i++)
+                    {
+                        rowData[i] = logDataGridView.Rows[rowIndex].Cells[i].Value?.ToString();
+                    }
+                }));
+            }
+            else
+            {
+                for (int i = 0; i < logDataGridView.ColumnCount; i++)
+                {
+                    rowData[i] = logDataGridView.Rows[rowIndex].Cells[i].Value?.ToString();
+                }
+            }
+
+            return rowData;
         }
     }
     /// <summary>
