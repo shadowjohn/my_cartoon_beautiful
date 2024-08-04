@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -194,7 +195,22 @@ namespace utility
                 return "0 B";
             }
         }
+        public string md5_file(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                throw new FileNotFoundException("File not found", filePath);
+            }
 
+            using (var md5 = MD5.Create())
+            {
+                using (var stream = File.OpenRead(filePath))
+                {
+                    var hash = md5.ComputeHash(stream);
+                    return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                }
+            }
+        }
         public string date(string format)
         {
             return date(format, strtotime(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffffff")));
@@ -405,27 +421,25 @@ namespace utility
         }
         public bool deltree(string target_dir)
         {
+            //From : https://dotblogs.com.tw/grepu9/2013/03/20/98267
             try
             {
-                Stack<string> dirs = new Stack<string>(new[] { target_dir });
-
-                while (dirs.Count > 0)
+                bool result = false;
+                string[] files = Directory.GetFiles(target_dir);
+                string[] dirs = Directory.GetDirectories(target_dir);
+                foreach (string file in files)
                 {
-                    string currentDir = dirs.Pop();
-                    foreach (string file in Directory.GetFiles(currentDir))
-                    {
-                        File.SetAttributes(file, FileAttributes.Normal);
-                        File.Delete(file);
-                    }
-                    foreach (string dir in Directory.GetDirectories(currentDir))
-                    {
-                        dirs.Push(dir);
-                    }
-                    Directory.Delete(currentDir, false);
+                    File.SetAttributes(file, FileAttributes.Normal);
+                    File.Delete(file);
                 }
-                return true;
+                foreach (string dir in dirs)
+                {
+                    deltree(dir);
+                }
+                Directory.Delete(target_dir, false);
+                return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return false;
             }

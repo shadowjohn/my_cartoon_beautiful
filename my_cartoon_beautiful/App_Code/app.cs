@@ -1,8 +1,10 @@
 ﻿using my_cartoon_beautiful;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -156,6 +158,10 @@ namespace utility_app
                         return false;
                     }
                 }
+                theform.Invoke((MethodInvoker)(() =>
+                {
+                    theform.setProgressTitle("影像轉成 png: " + totalsFrame.ToString() + " / " + totalsFrame.ToString());
+                }));
                 return true;
             }, cancellationToken);
         }
@@ -171,11 +177,27 @@ namespace utility_app
             {
                 theform.setProgressTitle("影片分離聲音...");
             }));
-            string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
+
+            string soundkind = theform.comboBox_soundKind.Text.Trim();
+            Console.WriteLine("soundkind: " + soundkind);
+            string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
+            string mp3_param = "";
+            switch (soundkind)
+            {
+                case "MP3":
+                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
+                    mp3_param = "-c:a libmp3lame -q:a 2";
+                    break;
+                default:
+                    // 原音
+                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
+                    break;
+            }
+
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
-                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vn \"{wav_file}\"",
+                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vn {mp3_param} \"{wav_file}\"",
                 RedirectStandardOutput = false,
                 RedirectStandardError = false,
                 UseShellExecute = false,
@@ -218,7 +240,7 @@ namespace utility_app
                             Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
                             Int64 duration = et - st;
                             theform.my.grid_updateRow(theform.logDataGridView, "將 影片分離聲音", "經過時間", duration + " 秒");
-                            
+
                             Task.Delay(1000).Wait(); // 非阻塞的延遲
                         }
 
@@ -276,10 +298,50 @@ namespace utility_app
                 theform.setProgressTitle("計算有多少圖片需處理...");
             }));
 
-            long totalsPngs = theform.my.glob(sourcePath, "*.png").Count();
+
             theform.Invoke((MethodInvoker)(() =>
             {
-                theform.setProgressTitle("計算有多少圖片需處理..." + totalsPngs.ToString());
+                theform.setProgressTitle("計算刪除重複影像後數量...");
+            }));
+            //2024-08-04 找出重複的圖片，我希望只處理一次
+            var sourcePngs = theform.my.glob(sourcePath, "*.png");
+            Dictionary<string, List<string>> fileMd5 = new Dictionary<string, List<string>>();
+
+            //原始檔名，只記 BN
+            //只記與他相同的檔案名稱
+            var sourcePngsLists = new Dictionary<string, string>();
+            int step = 0;
+            int total = sourcePngs.Count();
+            foreach (string png in sourcePngs)
+            {
+                string md5 = theform.my.md5_file(png);
+                string bn = theform.my.basename(png);
+                if (!fileMd5.ContainsKey(md5))
+                {
+                    fileMd5[md5] = new List<string>();
+                    fileMd5[md5].Add(bn);
+                    sourcePngsLists[bn] = bn;
+                }
+                else
+                {
+                    fileMd5[md5].Add(bn);
+                    sourcePngsLists[bn] = fileMd5[md5][0];
+                    //刪除這張
+                    theform.my.unlink(png);
+                }
+                if (step % 10 == 0)
+                {
+                    theform.Invoke((MethodInvoker)(() =>
+                    {
+                        theform.setProgressTitle("計算刪除重複影像後數量..." + step.ToString() + " / " + total.ToString());
+                        theform.setProgress(total == 0 ? 22 : theform.my.arduino_map(step, 0, total, 18.0, 22.0));
+                    }));
+                }
+                step++;
+            }
+            theform.Invoke((MethodInvoker)(() =>
+            {
+                theform.setProgressTitle("計算刪除重複影像後數量..." + theform.my.glob(sourcePath, "*.png").Count().ToString());
             }));
 
             if (theform.my.is_dir(targetPath))
@@ -288,6 +350,13 @@ namespace utility_app
             }
             theform.my.mkdir(targetPath);
             await Task.Delay(1000); // 使用非阻塞的延遲
+
+            long totalsPngs = theform.my.glob(sourcePath, "*.png").Count();
+            theform.Invoke((MethodInvoker)(() =>
+            {
+                theform.setProgressTitle("計算有多少圖片需處理..." + totalsPngs.ToString());
+            }));
+
 
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
@@ -307,6 +376,7 @@ namespace utility_app
             return await Task.Run(() =>
             {
                 bool isCancel = false;
+                Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 原影像 png 用 ai 轉成高解析度", "開始時間")));
                 using (Process process = new Process())
                 {
                     process.StartInfo = startInfo;
@@ -333,7 +403,6 @@ namespace utility_app
                         //process.BeginOutputReadLine();
                         //process.BeginErrorReadLine();
 
-                        Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 原影像 png 用 ai 轉成高解析度", "開始時間")));
                         while (!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
@@ -360,7 +429,7 @@ namespace utility_app
                             {
                                 theform.setProgressTitle($"高解析度影像轉檔... {nowPngs} / {totalsPngs}");
                                 double percentComplete = (double)nowPngs / totalsPngs * 100.0;
-                                double showPercent = theform.my.arduino_map(percentComplete, 0, 100.0, 18.0, 87.0);
+                                double showPercent = theform.my.arduino_map(percentComplete, 0, 100.0, 22.0, 87.0);
                                 theform.setProgress(showPercent);
                             }));
                             Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
@@ -387,6 +456,26 @@ namespace utility_app
                 {
                     return false;
                 }
+
+                //2024-08-04 針對 sourcePngsLists 補上相同的圖片
+                var fp_target = theform.my.glob(targetPath, "*.png");
+                var bn_target = new Dictionary<string, string>();
+                foreach (var p in fp_target)
+                {
+                    bn_target[theform.my.basename(p)] = "";
+                }
+                foreach (var p in sourcePngsLists)
+                {
+                    if (!bn_target.ContainsKey(p.Key))
+                    {
+                        theform.my.copy(Path.Combine(targetPath, p.Value), Path.Combine(targetPath, p.Key));
+                    }
+                }
+                Int64 _et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
+                Int64 _duration = _et - st;
+                theform.my.grid_updateRow(theform.logDataGridView, "將 原影像 png 用 ai 轉成高解析度", "經過時間", _duration + " 秒");
+                Task.Delay(1000).Wait(); // 非阻塞的延遲
+
                 return true;
             }, cancellationToken);
         }
@@ -402,7 +491,20 @@ namespace utility_app
             {
                 theform.setProgressTitle("高解析度影像與聲音檔合併輸出...");
             }));
-            string wavFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
+
+            string soundkind = theform.comboBox_soundKind.Text.Trim().ToUpper();
+            string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
+            switch (soundkind)
+            {
+                case "MP3":
+                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
+                    break;
+                default:
+                    // 原音
+                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
+                    break;
+            }
+
             string aIPngPath = Path.Combine(workPath, "target");
             string progressFilePath = Path.Combine(workPath, "progress.txt");
 
@@ -432,7 +534,7 @@ namespace utility_app
                 // -hwaccel dxva2
                 //libx264
                 // -progress \"{progressFilePath}\" -loglevel quiet
-                Arguments = $" -hwaccel auto -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{wavFile}\" -c:v \"{codec}\" -pix_fmt yuv420p -acodec aac \"{targetFile}\"",
+                Arguments = $" -hwaccel auto -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{wav_file}\" -c:v \"{codec}\" -pix_fmt yuv420p -acodec copy \"{targetFile}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -507,7 +609,7 @@ namespace utility_app
                                 isCancel = true;
                                 cancellationToken.ThrowIfCancellationRequested();
                                 break;
-                            }                            
+                            }
                             Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
                             Int64 duration = et - st;
                             theform.my.grid_updateRow(theform.logDataGridView, "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", "經過時間", duration + " 秒");

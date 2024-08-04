@@ -134,6 +134,9 @@ namespace my_cartoon_beautiful
             // preset x 2
             comboBox_ImageScale.SelectedIndex = 0;
 
+            // default mp3
+            comboBox_soundKind.SelectedIndex = 0;
+
             // 設定邊框樣式
             labelShowLog.AutoSize = true;
             labelShowLog.BorderStyle = BorderStyle.FixedSingle;
@@ -220,6 +223,7 @@ namespace my_cartoon_beautiful
                         button2.Enabled = false;
                         txtOutput.Enabled = false;
                         comboBox_ImageScale.Enabled = false;
+                        comboBox_soundKind.Enabled = false;
                         labelShowLog.Visible = true;
                         switch (labelShowLog.Text)
                         {
@@ -246,6 +250,7 @@ namespace my_cartoon_beautiful
                         button2.Enabled = true;
                         txtOutput.Enabled = true;
                         comboBox_ImageScale.Enabled = true;
+                        comboBox_soundKind.Enabled = true;
                         labelShowLog.Visible = false;
                         //logDataGridView.Rows.Clear();
                         //logDataGridView.Visible = false;
@@ -366,145 +371,159 @@ namespace my_cartoon_beautiful
                     long st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                     long et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                     Int64 duration = 0;
-                    my.grid_addRow(logDataGridView, new string[] { "步驟1", "檢查與建立工作目錄", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-
-                    if (!App.step1_checkWorkPath(workPath))
+                    bool success = true;
                     {
-                        uiRunOrStop("STOP");
-                        try { if (!isDebug) { my.deltree(workPath); } } catch { }
-                        cts = null;
-                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        duration = et - st;
-                        my.grid_updateRow(logDataGridView, 0, new string[] { "步驟1", "檢查與建立工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
-                        return;
-                    }
-                    //將 影片轉 png 
-                    Task.Delay(1000).Wait();
-                    cts = new CancellationTokenSource();
+                        my.grid_addRow(logDataGridView, new string[] { "步驟1", "檢查與建立工作目錄", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
 
-                    et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    duration = et - st;
-                    my.grid_updateRow(logDataGridView, 0, new string[] { "步驟1", "檢查與建立工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
-
-
-                    st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    my.grid_addRow(logDataGridView, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-                    bool success = await App.step2_sourceFile_to_png(workPath, sourceFile, cts.Token);
-                    if (!success)
-                    {
-                        uiRunOrStop("STOP");
-                        try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
-                        cts = null;
-                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        duration = et - st;
-                        //my.grid_updateRow(logDataGridView, 1, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
-                        my.grid_updateRow(logDataGridView, "將 影片轉 png", "經過時間", duration.ToString() + " 秒");
-                        my.grid_updateRow(logDataGridView, "將 影片轉 png", "結束時間", my.date());
-                        my.grid_updateRow(logDataGridView, "將 影片轉 png", "狀態", "失敗");
-                        return;
-                    }
-                    //將 影片轉 wav
-
-                    et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    duration = et - st;
-                    my.grid_updateRow(logDataGridView, 1, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
-                    st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-
-                    st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    my.grid_addRow(logDataGridView, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-
-                    cts = new CancellationTokenSource();
-                    Task.Delay(1000).Wait();
-                    success = await App.step3_sourceFile_to_wav(workPath, sourceFile, targetFile, cts.Token);
-                    if (!success)
-                    {
-                        uiRunOrStop("STOP");
-                        try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
-                        cts = null;
-                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        duration = et - st;
-                        //my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
-                        my.grid_updateRow(logDataGridView, "將 影片分離聲音", "經過時間", duration.ToString() + " 秒");
-                        my.grid_updateRow(logDataGridView, "將 影片分離聲音", "結束時間", my.date());
-                        my.grid_updateRow(logDataGridView, "將 影片分離聲音", "狀態", "失敗");
-                        return;
-                    }
-                    //將 原影像 png 用 ai 轉成高解析度
-
-                    et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    duration = et - st;
-                    my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
-                    st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    my.grid_addRow(logDataGridView, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-                    cts = new CancellationTokenSource();
-                    Task.Delay(1000).Wait();
-                    success = await App.step4_sourcePng_to_aiPng(workPath, cts.Token);
-                    if (!success)
-                    {
-                        uiRunOrStop("STOP");
-                        try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
-                        cts = null;
-                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        duration = et - st;
-                        my.grid_updateRow(logDataGridView, 3, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
-                        return;
-                    }
-
-                    //將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4 
-                    et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    duration = et - st;
-                    my.grid_updateRow(logDataGridView, 3, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
-                    st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    my.grid_addRow(logDataGridView, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-
-
-                    cts = new CancellationTokenSource();
-                    Task.Delay(1000).Wait();
-                    success = await App.step5_aiPng_to_mp4(workPath, targetFile, cts.Token);
-                    if (!success)
-                    {
-                        uiRunOrStop("STOP");
-                        try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
-                        cts = null;
-                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        duration = et - st;
-                        my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString(), my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
-                        return;
-                    }
-
-                    cts = new CancellationTokenSource();
-                    et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    duration = et - st;
-                    my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
-                    st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    my.grid_addRow(logDataGridView, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-
-
-                    Task.Delay(1000).Wait();
-                    if (!isDebug)
-                    {
-                        success = await App.step6_remove_workPath(workPath, cts.Token);
-                        if (!success)
+                        if (!App.step1_checkWorkPath(workPath))
                         {
                             uiRunOrStop("STOP");
+                            try { if (!isDebug) { my.deltree(workPath); } } catch { }
                             cts = null;
                             et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                             duration = et - st;
-                            my.grid_updateRow(logDataGridView, 5, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "否" });
+                            my.grid_updateRow(logDataGridView, 0, new string[] { "步驟1", "檢查與建立工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
                             return;
                         }
-                    }
-                    et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    duration = et - st;
-                    my.grid_updateRow(logDataGridView, 5, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
+                        //將 影片轉 png 
+                        Task.Delay(1000).Wait();
+                        cts = new CancellationTokenSource();
 
+                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                        duration = et - st;
+                        my.grid_updateRow(logDataGridView, 0, new string[] { "步驟1", "檢查與建立工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
+                    }  // step 1 步驟1 檢查與建立工作目錄
+
+                    {
+                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                        my.grid_addRow(logDataGridView, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
+                        success = await App.step2_sourceFile_to_png(workPath, sourceFile, cts.Token);
+                        if (!success)
+                        {
+                            uiRunOrStop("STOP");
+                            try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
+                            cts = null;
+                            et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                            duration = et - st;
+                            //my.grid_updateRow(logDataGridView, 1, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
+                            my.grid_updateRow(logDataGridView, "將 影片轉 png", "經過時間", duration.ToString() + " 秒");
+                            my.grid_updateRow(logDataGridView, "將 影片轉 png", "結束時間", my.date());
+                            my.grid_updateRow(logDataGridView, "將 影片轉 png", "狀態", "失敗");
+                            return;
+                        }
+                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                        duration = et - st;
+                        my.grid_updateRow(logDataGridView, 1, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
+                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                    } // step 2 步驟2 將 影片轉 png                    
+
+                    {
+
+                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                        my.grid_addRow(logDataGridView, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
+
+                        cts = new CancellationTokenSource();
+                        Task.Delay(1000).Wait();
+                        success = await App.step3_sourceFile_to_wav(workPath, sourceFile, targetFile, cts.Token);
+                        if (!success)
+                        {
+                            uiRunOrStop("STOP");
+                            try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
+                            cts = null;
+                            et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                            duration = et - st;
+                            //my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
+                            my.grid_updateRow(logDataGridView, "將 影片分離聲音", "經過時間", duration.ToString() + " 秒");
+                            my.grid_updateRow(logDataGridView, "將 影片分離聲音", "結束時間", my.date());
+                            my.grid_updateRow(logDataGridView, "將 影片分離聲音", "狀態", "失敗");
+                            return;
+                        }
+                        //將 原影像 png 用 ai 轉成高解析度
+
+                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                        duration = et - st;
+                        my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
+                    } // step 3 步驟3 將 影片分離聲音
+
+                    {
+                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                        my.grid_addRow(logDataGridView, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
+                        cts = new CancellationTokenSource();
+                        Task.Delay(1000).Wait();
+                        success = await App.step4_sourcePng_to_aiPng(workPath, cts.Token);
+                        if (!success)
+                        {
+                            uiRunOrStop("STOP");
+                            try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
+                            cts = null;
+                            et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                            duration = et - st;
+                            my.grid_updateRow(logDataGridView, 3, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
+                            return;
+                        }
+
+                        //將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4 
+                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                        duration = et - st;
+                        my.grid_updateRow(logDataGridView, 3, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
+
+                    } // step 4 步驟4 將 原影像 png 用 ai 轉成高解析度
+
+                    {
+                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                        my.grid_addRow(logDataGridView, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
+
+                        cts = new CancellationTokenSource();
+                        Task.Delay(1000).Wait();
+                        success = await App.step5_aiPng_to_mp4(workPath, targetFile, cts.Token);
+                        if (!success)
+                        {
+                            uiRunOrStop("STOP");
+                            try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
+                            cts = null;
+                            et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                            duration = et - st;
+                            my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString(), my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
+                            return;
+                        }
+
+                        cts = new CancellationTokenSource();
+                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                        duration = et - st;
+                        my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
+                    } // step 5 步驟5 將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4
+
+                    {
+                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                        my.grid_addRow(logDataGridView, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
+
+
+                        Task.Delay(1000).Wait();
+                        if (!isDebug)
+                        {
+                            success = await App.step6_remove_workPath(workPath, cts.Token);
+                            if (!success)
+                            {
+                                uiRunOrStop("STOP");
+                                cts = null;
+                                et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                                duration = et - st;
+                                my.grid_updateRow(logDataGridView, 5, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "否" });
+                                return;
+                            }
+                        }
+                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                        duration = et - st;
+                        my.grid_updateRow(logDataGridView, 5, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
+                    } // step 6 步驟6 清理工作目錄
                     //加上總時間
                     st = Convert.ToInt64(my.strtotime(my.grid_getRowValueFromNindNameAndCellName(logDataGridView, "檢查與建立工作目錄", "開始時間")));
                     et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                     duration = et - Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s", st.ToString())));
                     my.grid_addRow(logDataGridView, new string[] { "結算", "總時間", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "完成" });
-
-                    MessageBox.Show("工作完成");
+                    this.TopMost = true;
+                    MessageBox.Show(this, "工作完成", "通知", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    this.TopMost = false;
                     uiRunOrStop("STOP");
                 }
                 catch (OperationCanceledException)
@@ -574,6 +593,14 @@ namespace my_cartoon_beautiful
             }
         }
 
+        private void labelShowLog_MouseEnter(object sender, EventArgs e)
+        {
+            this.Cursor = Cursors.Hand;
+        }
 
+        private void labelShowLog_MouseLeave(object sender, EventArgs e)
+        {
+            this.Cursor = Cursors.Default;
+        }
     }
 }
