@@ -46,6 +46,11 @@
             this.label3 = new System.Windows.Forms.Label();
             this.comboBox_ImageScale = new System.Windows.Forms.ComboBox();
             this.button3 = new System.Windows.Forms.Button();
+            this.labelShowLog = new System.Windows.Forms.Label();
+            this.logDataGridView = new System.Windows.Forms.DataGridView();
+            this.label4 = new System.Windows.Forms.Label();
+            this.comboBox_soundKind = new System.Windows.Forms.ComboBox();
+            ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).BeginInit();
             this.SuspendLayout();
             // 
             // notifyIcon1
@@ -132,9 +137,9 @@
             // 
             // progressBar1
             // 
-            this.progressBar1.Location = new System.Drawing.Point(39, 366);
+            this.progressBar1.Location = new System.Drawing.Point(15, 366);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(939, 47);
+            this.progressBar1.Size = new System.Drawing.Size(962, 47);
             this.progressBar1.TabIndex = 8;
             this.progressBar1.Visible = false;
             // 
@@ -179,7 +184,7 @@
             "x 2",
             "x 3",
             "x 4"});
-            this.comboBox_ImageScale.Location = new System.Drawing.Point(224, 237);
+            this.comboBox_ImageScale.Location = new System.Drawing.Point(224, 236);
             this.comboBox_ImageScale.Name = "comboBox_ImageScale";
             this.comboBox_ImageScale.Size = new System.Drawing.Size(90, 48);
             this.comboBox_ImageScale.TabIndex = 12;
@@ -195,11 +200,63 @@
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
+            // labelShowLog
+            // 
+            this.labelShowLog.AutoSize = true;
+            this.labelShowLog.Font = new System.Drawing.Font("微軟正黑體", 26.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.labelShowLog.ForeColor = System.Drawing.Color.DarkGreen;
+            this.labelShowLog.Location = new System.Drawing.Point(934, 240);
+            this.labelShowLog.Name = "labelShowLog";
+            this.labelShowLog.Size = new System.Drawing.Size(55, 45);
+            this.labelShowLog.TabIndex = 14;
+            this.labelShowLog.Text = "㊉";
+            this.labelShowLog.Visible = false;
+            this.labelShowLog.Click += new System.EventHandler(this.labelShowLog_Click);
+            this.labelShowLog.MouseEnter += new System.EventHandler(this.labelShowLog_MouseEnter);
+            this.labelShowLog.MouseLeave += new System.EventHandler(this.labelShowLog_MouseLeave);
+            // 
+            // logDataGridView
+            // 
+            this.logDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.logDataGridView.Location = new System.Drawing.Point(15, 419);
+            this.logDataGridView.Name = "logDataGridView";
+            this.logDataGridView.RowTemplate.Height = 24;
+            this.logDataGridView.Size = new System.Drawing.Size(962, 205);
+            this.logDataGridView.TabIndex = 15;
+            this.logDataGridView.Visible = false;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("微軟正黑體", 27.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.label4.Location = new System.Drawing.Point(340, 237);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(205, 47);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "聲音格式：";
+            // 
+            // comboBox_soundKind
+            // 
+            this.comboBox_soundKind.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox_soundKind.Font = new System.Drawing.Font("微軟正黑體", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.comboBox_soundKind.FormattingEnabled = true;
+            this.comboBox_soundKind.Items.AddRange(new object[] {
+            "MP3",
+            "原音"});
+            this.comboBox_soundKind.Location = new System.Drawing.Point(530, 236);
+            this.comboBox_soundKind.Name = "comboBox_soundKind";
+            this.comboBox_soundKind.Size = new System.Drawing.Size(121, 48);
+            this.comboBox_soundKind.TabIndex = 17;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1001, 425);
+            this.ClientSize = new System.Drawing.Size(1001, 421);
+            this.Controls.Add(this.comboBox_soundKind);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.logDataGridView);
+            this.Controls.Add(this.labelShowLog);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.comboBox_ImageScale);
             this.Controls.Add(this.label3);
@@ -219,9 +276,11 @@
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "影片清晰機";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.Resize += new System.EventHandler(this.Form1_Resize);
+            ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -245,6 +304,10 @@
         private System.Windows.Forms.Label label3;
         public System.Windows.Forms.ComboBox comboBox_ImageScale;
         private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Label labelShowLog;
+        public System.Windows.Forms.DataGridView logDataGridView;
+        private System.Windows.Forms.Label label4;
+        public System.Windows.Forms.ComboBox comboBox_soundKind;
     }
 }
 
