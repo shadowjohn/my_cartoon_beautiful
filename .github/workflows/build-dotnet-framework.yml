@@ -1,0 +1,35 @@
+name: Build .NET Framework Desktop Application
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup .NET Framework
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Install NuGet
+      uses: NuGet/setup-nuget@v1.0.5
+
+    - name: Restore NuGet packages
+      run: nuget restore my_cartoon_beautiful/my_cartoon_beautiful.sln
+
+    - name: Build solution
+      run: msbuild my_cartoon_beautiful/my_cartoon_beautiful.sln /p:Configuration=Release /p:Platform="Any CPU"
+
+    - name: Archive build output
+      uses: actions/upload-artifact@v2
+      with:
+        name: build-output
+        path: my_cartoon_beautiful/bin/Release/
