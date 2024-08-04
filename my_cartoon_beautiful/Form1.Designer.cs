@@ -276,7 +276,7 @@
         public System.Windows.Forms.ComboBox comboBox_ImageScale;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Label labelShowLog;
-        private System.Windows.Forms.DataGridView logDataGridView;
+        public System.Windows.Forms.DataGridView logDataGridView;
     }
 }
 

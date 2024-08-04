@@ -7,13 +7,9 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml;
-using System.Xml.Linq;
 
 
 namespace utility
@@ -766,6 +762,29 @@ namespace utility
                 logDataGridView.Rows.Add(strings);
             }
         }
+        public void grid_updateRow(DataGridView logDataGridView, string kindName, string fieldName, string value)
+        {
+            // Find the row with the specified kindName
+            // Find the column with the specified fieldName
+            // Update the cell value with the specified value
+            if (logDataGridView == null)
+            {
+                throw new ArgumentNullException(nameof(logDataGridView));
+            }
+            int index = grid_getRowIndexFromKindName(logDataGridView, kindName);
+            if (index == -1)
+            {
+                // 找不到指定的 工作名稱
+                return;
+            }
+            if (logDataGridView.InvokeRequired)
+            {
+                logDataGridView.Invoke(new Action(() =>
+                {
+                    logDataGridView.Rows[index].Cells[fieldName].Value = value;
+                }));
+            }
+        }
         public void grid_updateRow(DataGridView logDataGridView, int rowIndex, string[] strings)
         {
             if (logDataGridView == null)
@@ -803,6 +822,53 @@ namespace utility
                 for (int i = 0; i < strings.Length; i++)
                 {
                     logDataGridView.Rows[rowIndex].Cells[i].Value = strings[i];
+                }
+            }
+        }
+        public int grid_getRowIndexFromKindName(DataGridView logDataGridView, string kindName)
+        {
+            if (logDataGridView.InvokeRequired)
+            {
+                return (int)logDataGridView.Invoke(new Func<int>(() => grid_getRowIndexFromKindName(logDataGridView, kindName)));
+            }
+            else
+            {
+                // 遍歷 DataGridView 的所有行
+                foreach (DataGridViewRow row in logDataGridView.Rows)
+                {
+                    // 檢查行是否為新行（用於輸入新數據的行）
+                    if (row.IsNewRow)
+                    {
+                        continue;
+                    }
+
+                    // 檢查行中的 "kindName" 列是否存在且值是否匹配
+                    if (row.Cells["工作名稱"].Value != null && row.Cells["工作名稱"].Value.ToString() == kindName)
+                    {
+                        return row.Index;
+                    }
+                }
+
+                // 如果沒有找到匹配的行，返回 -1
+                return -1;
+            }
+        }
+        public string grid_getRowValueFromNindNameAndCellName(DataGridView logDataGridView, string kindName, string cellName)
+        {
+            if (logDataGridView.InvokeRequired)
+            {
+                return (string)logDataGridView.Invoke(new Func<string>(() => grid_getRowValueFromNindNameAndCellName(logDataGridView, kindName, cellName)));
+            }
+            else
+            {
+                int rowIndex = grid_getRowIndexFromKindName(logDataGridView, kindName);
+                if (rowIndex >= 0 && rowIndex < logDataGridView.Rows.Count)
+                {
+                    return logDataGridView.Rows[rowIndex].Cells[cellName].Value.ToString();
+                }
+                else
+                {
+                    throw new ArgumentException("指定的 kindName 找不到對應的行。");
                 }
             }
         }

@@ -311,11 +311,11 @@ namespace my_cartoon_beautiful
                 string json_columns = @"
                     [
                         {""id"":""步驟"",""name"":""步驟"",""width"":""80"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""},
-                        {""id"":""工作名稱"",""name"":""工作名稱"",""width"":""300"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""},
+                        {""id"":""工作名稱"",""name"":""工作名稱"",""width"":""300"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""left"",""columnKind"":""text""},
                         {""id"":""開始時間"",""name"":""開始時間"",""width"":""180"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""},
-                        {""id"":""經過時間"",""name"":""經過時間"",""width"":""120"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""},
+                        {""id"":""經過時間"",""name"":""經過時間"",""width"":""120"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""right"",""columnKind"":""text""},
                         {""id"":""結束時間"",""name"":""結束時間"",""width"":""180"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""},
-                        {""id"":""已完成"",""name"":""已完成"",""width"":""90"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""}                        
+                        {""id"":""狀態"",""name"":""狀態"",""width"":""90"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""}                        
                     ]
                 ";
                 //var ra = my.datatable_init(json_columns);
@@ -332,15 +332,23 @@ namespace my_cartoon_beautiful
                 logDataGridView.ReadOnly = true;
                 logDataGridView.RowHeadersVisible = false;
                 logDataGridView.ColumnHeadersVisible = true;
-
+                //logDataGridView.RowHeadersDefaultCellStyle.BackColor = System.Drawing.Color.Orange;
+                logDataGridView.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.Orange;
+                logDataGridView.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.Black;
+                logDataGridView.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("微軟正黑體", 13, System.Drawing.FontStyle.Bold);
+                logDataGridView.EnableHeadersVisualStyles = false;
+                logDataGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+                logDataGridView.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+                logDataGridView.AllowUserToResizeColumns = true;
+                logDataGridView.AllowUserToResizeRows = false;
                 foreach (DataGridViewColumn column in logDataGridView.Columns)
                 {
                     column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                    column.DefaultCellStyle.BackColor = System.Drawing.Color.Orange;
-                    column.DefaultCellStyle.Font = new System.Drawing.Font("微軟正黑體", 16, System.Drawing.FontStyle.Bold);
+                    column.DefaultCellStyle.BackColor = System.Drawing.Color.White;
+                    column.DefaultCellStyle.Font = new System.Drawing.Font("微軟正黑體", 12, System.Drawing.FontStyle.Bold);
                 }
 
-
+                logDataGridView.Refresh();
 
                 this.Invoke((MethodInvoker)(() =>
                 {
@@ -389,7 +397,10 @@ namespace my_cartoon_beautiful
                         cts = null;
                         et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                         duration = et - st;
-                        my.grid_updateRow(logDataGridView, 1, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
+                        //my.grid_updateRow(logDataGridView, 1, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
+                        my.grid_updateRow(logDataGridView, "將 影片轉 png", "經過時間", duration.ToString() + " 秒");
+                        my.grid_updateRow(logDataGridView, "將 影片轉 png", "結束時間", my.date());
+                        my.grid_updateRow(logDataGridView, "將 影片轉 png", "狀態", "失敗");
                         return;
                     }
                     //將 影片轉 wav
@@ -412,7 +423,10 @@ namespace my_cartoon_beautiful
                         cts = null;
                         et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                         duration = et - st;
-                        my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
+                        //my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
+                        my.grid_updateRow(logDataGridView, "將 影片分離聲音", "經過時間", duration.ToString() + " 秒");
+                        my.grid_updateRow(logDataGridView, "將 影片分離聲音", "結束時間", my.date());
+                        my.grid_updateRow(logDataGridView, "將 影片分離聲音", "狀態", "失敗");
                         return;
                     }
                     //將 原影像 png 用 ai 轉成高解析度
@@ -436,12 +450,12 @@ namespace my_cartoon_beautiful
                         return;
                     }
 
-                    //將 ai 轉的高解析度影像 png 與 wav 合併輸出成 mp4 
+                    //將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4 
                     et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                     duration = et - st;
                     my.grid_updateRow(logDataGridView, 3, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
                     st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    my.grid_addRow(logDataGridView, new string[] { "步驟5", "將 ai 轉的高解析度影像 png 與 wav 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
+                    my.grid_addRow(logDataGridView, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
 
 
                     cts = new CancellationTokenSource();
@@ -454,14 +468,14 @@ namespace my_cartoon_beautiful
                         cts = null;
                         et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                         duration = et - st;
-                        my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 png 與 wav 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString(), my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
+                        my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString(), my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
                         return;
                     }
 
                     cts = new CancellationTokenSource();
                     et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                     duration = et - st;
-                    my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 png 與 wav 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
+                    my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
                     st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                     my.grid_addRow(logDataGridView, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
 
@@ -483,6 +497,13 @@ namespace my_cartoon_beautiful
                     et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                     duration = et - st;
                     my.grid_updateRow(logDataGridView, 5, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
+
+                    //加上總時間
+                    st = Convert.ToInt64(my.strtotime(my.grid_getRowValueFromNindNameAndCellName(logDataGridView, "檢查與建立工作目錄", "開始時間")));
+                    et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
+                    duration = et - Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s", st.ToString())));
+                    my.grid_addRow(logDataGridView, new string[] { "結算", "總時間", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "完成" });
+
                     MessageBox.Show("工作完成");
                     uiRunOrStop("STOP");
                 }

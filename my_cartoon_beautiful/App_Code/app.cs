@@ -79,6 +79,7 @@ namespace utility_app
                 using (Process process = Process.Start(startInfo))
                 {
                     // 獲取進度
+                    Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 影片轉 png", "開始時間")));
                     try
                     {
                         bool isCancel = false;
@@ -133,87 +134,22 @@ namespace utility_app
                                     }));
                                     break;
                                 }
+
+                                Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
+                                Int64 duration = et - st;
+                                theform.my.grid_updateRow(theform.logDataGridView, "將 影片轉 png", "經過時間", duration + " 秒");
                                 Task.Delay(1000).Wait(); // 非阻塞的延遲
                             }
                             catch
                             {
                                 Task.Delay(1000).Wait(); // 非阻塞的延遲
                             }
-                            /*
-                            if (File.Exists(progressFilePath))
-                            {
-                                string progressText = theform.my.readFileWithRetry(progressFilePath, 50, 100).Replace("\r", "").Trim();
-
-                                if (progressText == "")
-                                {
-                                    Task.Delay(1000).Wait(); // 非阻塞的延遲
-                                    continue;
-                                }
-                                bool isEnd = false;
-                                var m = theform.my.explode("\n", progressText);
-                                if (last_progressText == null)
-                                {
-                                    last_progressText = progressText;
-                                }
-                                else
-                                {
-                                    if (last_progressText == progressText)
-                                    {
-                                        same_data_times++;
-                                        if (same_data_times >= 10)
-                                        {
-                                            isEnd = true;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        same_data_times = 0;
-                                    }
-                                }
-
-                                for (int i = m.Count() - 1; i >= 0; i--)
-                                {
-                                    if (m[i].Trim() == "progress=end")
-                                    {
-                                        isEnd = true;
-                                        break;
-                                    }
-                                    if (theform.my.is_string_like_new(m[i], "frame=%"))
-                                    {
-                                        double d = Convert.ToDouble(theform.my.explode("frame=", m[i].Trim())[1]);
-                                        double p = theform.my.arduino_map(d, 0, totalsFrame, 0.0, 15.0);
-                                        p = (p >= 15) ? 15.0 : p;
-                                        theform.Invoke((MethodInvoker)(() => theform.setProgress(p)));
-                                        break;
-                                    }
-                                }
-
-                                if (isEnd)
-                                {
-                                    break;
-                                }
-                                last_progressText = progressText;
-                            }
-                            */
-                            //Thread.Sleep(1000);
-
                         }; // while
-
                         if (isCancel)
                         {
                             return false;
                         }
-
-                        //if (File.Exists(progressFilePath))
-                        {
-                            //string progressText = File.ReadAllText(progressFilePath);
-                            //Console.WriteLine("PPPPPPPPPPPPPPPPPPPPPPPPP Done:");
-                            //Console.WriteLine(progressText);
-                            theform.Invoke((MethodInvoker)(() => theform.setProgress(15)));
-                        }
-
-                        //string error = process.StandardError.ReadToEnd();
-                        //Console.WriteLine("Error: " + error);
+                        theform.Invoke((MethodInvoker)(() => theform.setProgress(15)));
                     }
                     catch
                     {
@@ -256,6 +192,7 @@ namespace utility_app
                 {
                     try
                     {
+                        Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 影片分離聲音", "開始時間")));
                         // 獲取進度
                         while (!process.HasExited)
                         {
@@ -278,6 +215,10 @@ namespace utility_app
                                 break;
 
                             }
+                            Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
+                            Int64 duration = et - st;
+                            theform.my.grid_updateRow(theform.logDataGridView, "將 影片分離聲音", "經過時間", duration + " 秒");
+                            
                             Task.Delay(1000).Wait(); // 非阻塞的延遲
                         }
 
@@ -392,7 +333,7 @@ namespace utility_app
                         //process.BeginOutputReadLine();
                         //process.BeginErrorReadLine();
 
-
+                        Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 原影像 png 用 ai 轉成高解析度", "開始時間")));
                         while (!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
@@ -422,7 +363,9 @@ namespace utility_app
                                 double showPercent = theform.my.arduino_map(percentComplete, 0, 100.0, 18.0, 87.0);
                                 theform.setProgress(showPercent);
                             }));
-
+                            Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
+                            Int64 duration = et - st;
+                            theform.my.grid_updateRow(theform.logDataGridView, "將 原影像 png 用 ai 轉成高解析度", "經過時間", duration + " 秒");
                             Task.Delay(1000).Wait(); // 非阻塞的延遲
                         }
                         /*
@@ -548,6 +491,7 @@ namespace utility_app
                         //Console.WriteLine("is file: " + theform.my.is_file(targetFile));
                         //Console.WriteLine("is file lock: " + theform.my.isFileLocked(targetFile));
                         //!theform.my.is_file(targetFile) || (theform.my.is_file(targetFile) && theform.my.isFileLocked(targetFile))
+                        Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", "開始時間")));
                         while (!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
@@ -563,47 +507,11 @@ namespace utility_app
                                 isCancel = true;
                                 cancellationToken.ThrowIfCancellationRequested();
                                 break;
-                            }
-                            /*if (isNeedStop)
-                            {
-                                break;
-                            }*/
-                            Task.Delay(1000).Wait(); // 非阻塞的延遲
-                            /*if (File.Exists(progressFilePath))
-                            {
-                                string progressText = theform.my.readFileWithRetry(progressFilePath, 50, 100).Replace("\r", "").Trim();
-
-                                if (progressText == "")
-                                {
-                                    Task.Delay(1000).Wait(); // 非阻塞的延遲
-                                    continue;
-                                }
-
-                                bool isEnd = false;
-                                var m = theform.my.explode("\n", progressText);
-
-                                for (int i = m.Count() - 1; i >= 0; i--)
-                                {
-                                    if (m[i].Trim() == "progress=end")
-                                    {
-                                        isEnd = true;
-                                    }
-                                    if (theform.my.is_string_like_new(m[i], "frame=%"))
-                                    {
-                                        double d = Convert.ToDouble(theform.my.explode("frame=", m[i].Trim())[1]);
-                                        double p = theform.my.arduino_map(d, 0, totalsPngs, 88, 97.0);
-                                        p = (p >= 97) ? 97.0 : p;
-                                        theform.Invoke((MethodInvoker)(() => theform.setProgress(p)));
-                                        break;
-                                    }
-                                }
-                                if (isEnd)
-                                {
-                                    break;
-                                }
-
-                            }*/
-                            //Task.Delay(1000).Wait(); // 非阻塞的延遲
+                            }                            
+                            Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
+                            Int64 duration = et - st;
+                            theform.my.grid_updateRow(theform.logDataGridView, "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", "經過時間", duration + " 秒");
+                            Task.Delay(1000).Wait(); // 非阻塞的延遲                            
                         }
                     }
                     catch (Exception ex)
