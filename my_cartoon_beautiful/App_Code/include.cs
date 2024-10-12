@@ -82,6 +82,10 @@ namespace utility
         {
             return strtotime(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         }
+        public Int64 time64()
+        {
+            return Convert.ToInt64(time());
+        }
         public string date()
         {
             return date("Y-m-d H:i:s", strtotime(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffffff")));

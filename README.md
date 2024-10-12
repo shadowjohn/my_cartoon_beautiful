@@ -27,12 +27,12 @@
 
 ## 版本資訊
 - 最初開發日期：2024-07-28
-- 最後更新日期：2024-08-04
-- 版本：V0.03 beta版
+- 最後更新日期：2024-10-13
+- 版本：V0.04 beta版
 
 ## 下載位置
-- 主程式(V0.03 beta版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.03/my_cartoon_beautiful.zip)
-- 主程式(V0.02 穩定版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.02/my_cartoon_beautiful.zip)
+- 主程式(V0.04 beta版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.04/my_cartoon_beautiful.zip)
+- 主程式(V0.03 穩定版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.03/my_cartoon_beautiful.zip)
 
 ## 執行畫面
 ![執行畫面](snapshot/s1.png)
@@ -54,8 +54,13 @@
 3. windows .net framework 4.6.2
 
 ## 版本說明
-V0.01 版 (2024-07-28)：初版簽入
-通過微軟掃毒：[掃毒結果] https://www.microsoft.com/en-us/wdsi/submission/7690a33f-7234-4f4d-87cf-a86ae0e42491
+V0.04 版 (2024-10-13)：更新內容
+14. (2024-10-12 Done) 轉檔魯冰花480p 會卡死在 video → png 轉換與聲音轉換的步驟
+通過微軟掃毒：[掃毒結果] https://www.microsoft.com/en-us/wdsi/submission/85571e6d-59d2-46c2-b0d5-be3e6ab2871a
+
+V0.03 版 (2024-08-04)：更新內容
+12. (2024-08-04 Done) 【V0.03】聲音格式：AAC libmp3lame OGG 原音可選擇
+通過微軟掃毒：[掃毒結果] https://www.microsoft.com/en-us/wdsi/submission/3981004f-8c25-45b6-b35e-f5bf906deadb
 
 V0.02 版 (2024-08-04)：更新內容
  1. (2024-08-04 Done) 【V0.02】轉檔時，每個步驟有開始、結束時間
@@ -69,14 +74,12 @@ V0.02 版 (2024-08-04)：更新內容
  9. (2024-08-04 Done) 【V0.02】讓使用者自行指定原音，或是轉 mp3 可減少檔案大小
 10. (2024-08-04 Done) 【V0.02】結束時的 MessageBox 置頂
 11. (2024-08-04 Done) 【V0.02】滑鼠經過 ㊉ ㊀ 會變成手指指標
-
 通過微軟掃毒：[掃毒結果] https://www.microsoft.com/en-us/wdsi/submission/b919607d-3279-4575-b904-d457189df292
 
-V0.03 版 (2024-08-04)：更新內容
+V0.01 版 (2024-07-28)：初版簽入
+通過微軟掃毒：[掃毒結果] https://www.microsoft.com/en-us/wdsi/submission/187d28a1-810c-4ef8-8702-871c6ba6fccd
 
-12. (2024-08-04 Done) 【V0.03】聲音格式：AAC libmp3lame OGG 原音可選擇
 
-通過微軟掃毒：[掃毒結果] https://www.microsoft.com/en-us/wdsi/submission/3981004f-8c25-45b6-b35e-f5bf906deadb
 	
 ## 參考資料
 1. [ffmpeg](https://www.ffmpeg.org/download.html)
@@ -93,6 +96,7 @@ V0.03 版 (2024-08-04)：更新內容
  8. (2024-08-04 Done) 【V0.02】最後加上 總時間 結算時間
  9. (2024-08-04 Done) 【V0.02】讓使用者自行指定原音，或是轉 mp3 可減少檔案大小
 10. (2024-08-04 Done) 【V0.02】結束時的 MessageBox 置頂
-11. (2024-08-04 Done) 【V0.02】滑鼠經過 ㊉ ㊀ 會變成手指指標
+11. (2024-08-04 Done) 【V0.02】滑鼠經過 ㊉㊀ 會變成手指指標
 12. (2024-08-04 Done) 【V0.03】聲音格式：AAC libmp3lame OGG 原音可選擇
 13. 增加 x1 不放大倍率
+14. (2024-10-12 Done) 【V0.04】轉檔魯冰花會卡死在 video → png 轉換與聲音轉換的步驟

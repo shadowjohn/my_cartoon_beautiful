@@ -85,6 +85,8 @@ namespace utility_app
                     try
                     {
                         bool isCancel = false;
+                        long last_nowPngs = 0;
+                        Int64 last_changeDatetime = theform.my.time64();
                         while (true) //!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
@@ -111,6 +113,11 @@ namespace utility_app
                             try
                             {
                                 var nowPngs = Convert.ToInt64(theform.my.glob(Path.Combine(workPath, "source"), "*.png").Count());
+                                if (nowPngs != last_nowPngs)
+                                {
+                                    last_nowPngs = nowPngs;
+                                    last_changeDatetime = theform.my.time64();
+                                }
                                 double p = theform.my.arduino_map(nowPngs, 0, totalsFrame, 0.0, 15.0);
                                 p = (p >= 15) ? 15.0 : p;
                                 theform.Invoke((MethodInvoker)(() =>
@@ -123,6 +130,21 @@ namespace utility_app
                                     theform.setProgress(p);
                                 }));
                                 if (Math.Abs(totalsFrame - nowPngs) <= 5)
+                                {
+                                    Task.Delay(1000).Wait(); // 非阻塞的延遲
+                                    theform.Invoke((MethodInvoker)(() =>
+                                    {
+                                        if (nowPngs >= totalsFrame)
+                                        {
+                                            nowPngs = totalsFrame;
+                                        }
+                                        theform.setProgressTitle("影像轉成 png: " + nowPngs.ToString() + " / " + totalsFrame.ToString());
+                                        theform.setProgress(p);
+                                    }));
+                                    break;
+                                }
+                                // 如果進度大於 nowPngs / totalsFrame * 100，98% ，且超過30秒沒有變化，則認定正常完成
+                                if ((Convert.ToDouble(nowPngs) / Convert.ToDouble(totalsFrame)) * 100.0 >= 98.0 && theform.my.time64() - last_changeDatetime > 30)
                                 {
                                     Task.Delay(1000).Wait(); // 非阻塞的延遲
                                     theform.Invoke((MethodInvoker)(() =>
@@ -187,7 +209,7 @@ namespace utility_app
                 case "AAC":
                     wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
                     sound_param = "-c:a aac -b:a 192k";
-                    break;                
+                    break;
                 case "LIBMP3LAME":
                     wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
                     sound_param = "-c:a libmp3lame -q:a 4";
@@ -224,6 +246,9 @@ namespace utility_app
                     {
                         Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 影片分離聲音", "開始時間")));
                         // 獲取進度
+                        //記錄檔案最後的變化，如果連 30 秒都沒變，也中斷
+                        Int64 last_change_datetime = theform.my.time64();
+                        Int64 last_file_size = 0;
                         while (!process.HasExited)
                         {
                             if (cancellationToken.IsCancellationRequested)
@@ -248,6 +273,20 @@ namespace utility_app
                             Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
                             Int64 duration = et - st;
                             theform.my.grid_updateRow(theform.logDataGridView, "將 影片分離聲音", "經過時間", duration + " 秒");
+
+                            if (theform.my.is_file(wav_file))
+                            {
+                                Int64 fSize = theform.my.filesize(wav_file);
+                                if (fSize != last_file_size)
+                                {
+                                    last_file_size = fSize;
+                                    last_change_datetime = theform.my.time64();
+                                }
+                                if (fSize == last_file_size && theform.my.time64() - last_change_datetime > 30)
+                                {
+                                    break;
+                                }
+                            }
 
                             Task.Delay(1000).Wait(); // 非阻塞的延遲
                         }
@@ -507,7 +546,7 @@ namespace utility_app
             {
                 case "AAC":
                     wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
-                    break;                
+                    break;
                 case "LIBMP3LAME":
                     wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
                     break;
