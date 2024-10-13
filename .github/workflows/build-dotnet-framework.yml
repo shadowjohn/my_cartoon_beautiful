@@ -29,7 +29,7 @@ jobs:
       run: msbuild my_cartoon_beautiful/my_cartoon_beautiful.sln /p:Configuration=Release /p:Platform="Any CPU"
 
     - name: Archive build output
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: build-output
         path: my_cartoon_beautiful/bin/Release/
