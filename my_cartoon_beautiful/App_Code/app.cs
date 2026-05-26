@@ -312,7 +312,7 @@ namespace utility_app
             }));
             //2024-08-04 找出重複的圖片，我希望只處理一次
             var sourcePngs = theform.my.glob(sourcePath, "*.png");
-            Dictionary<string, List<string>> fileMd5 = new Dictionary<string, List<string>>();
+            Dictionary<string, List<string>> fileHash = new Dictionary<string, List<string>>();
 
             //原始檔名，只記 BN
             //只記與他相同的檔案名稱
@@ -321,18 +321,18 @@ namespace utility_app
             int total = sourcePngs.Count();
             foreach (string png in sourcePngs)
             {
-                string md5 = theform.my.md5_file(png);
+                string hash = theform.my.sha256_file(png);
                 string bn = theform.my.basename(png);
-                if (!fileMd5.ContainsKey(md5))
+                if (!fileHash.ContainsKey(hash))
                 {
-                    fileMd5[md5] = new List<string>();
-                    fileMd5[md5].Add(bn);
+                    fileHash[hash] = new List<string>();
+                    fileHash[hash].Add(bn);
                     sourcePngsLists[bn] = bn;
                 }
                 else
                 {
-                    fileMd5[md5].Add(bn);
-                    sourcePngsLists[bn] = fileMd5[md5][0];
+                    fileHash[hash].Add(bn);
+                    sourcePngsLists[bn] = fileHash[hash][0];
                     //刪除這張
                     theform.my.unlink(png);
                 }

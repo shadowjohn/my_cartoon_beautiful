@@ -18,6 +18,7 @@ namespace utility
     public class myinclude
     {
         private Random rnd = new Random(DateTime.Now.Millisecond);
+        public string last_error = "";
 
         public myinclude()
         {
@@ -211,6 +212,22 @@ namespace utility
                 using (var stream = File.OpenRead(filePath))
                 {
                     var hash = md5.ComputeHash(stream);
+                    return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+                }
+            }
+        }
+        public string sha256_file(string filePath)
+        {
+            if (!File.Exists(filePath))
+            {
+                throw new FileNotFoundException("File not found", filePath);
+            }
+
+            using (var sha256 = SHA256.Create())
+            {
+                using (var stream = File.OpenRead(filePath))
+                {
+                    var hash = sha256.ComputeHash(stream);
                     return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
                 }
             }
@@ -428,7 +445,11 @@ namespace utility
             //From : https://dotblogs.com.tw/grepu9/2013/03/20/98267
             try
             {
-                bool result = false;
+                last_error = "";
+                if (!Directory.Exists(target_dir))
+                {
+                    return true;
+                }
                 string[] files = Directory.GetFiles(target_dir);
                 string[] dirs = Directory.GetDirectories(target_dir);
                 foreach (string file in files)
@@ -438,13 +459,18 @@ namespace utility
                 }
                 foreach (string dir in dirs)
                 {
-                    deltree(dir);
+                    if (!deltree(dir))
+                    {
+                        return false;
+                    }
                 }
                 Directory.Delete(target_dir, false);
-                return result;
+                return true;
             }
             catch (Exception ex)
             {
+                last_error = ex.Message;
+                Console.WriteLine("deltree failed: " + ex.Message);
                 return false;
             }
         }
