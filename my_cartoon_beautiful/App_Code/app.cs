@@ -303,6 +303,10 @@ namespace utility_app
             string sourcePath = Path.Combine(workPath, "source");
             string targetPath = Path.Combine(workPath, "target");
             string imageScale = Convert.ToInt32(theform.my.explode("x ", theform.comboBox_ImageScale.Text.Trim())[1]).ToString();
+            if (imageScale == "1")
+            {
+                return await copySourcePngsWithoutUpscale(sourcePath, targetPath, cancellationToken);
+            }
 
             // 計算總圖片數量
             theform.Invoke((MethodInvoker)(() =>
@@ -489,6 +493,66 @@ namespace utility_app
                 Task.Delay(1000).Wait(); // 非阻塞的延遲
 
                 return true;
+            }, cancellationToken);
+        }
+        private async Task<bool> copySourcePngsWithoutUpscale(string sourcePath, string targetPath, CancellationToken cancellationToken)
+        {
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    theform.Invoke((MethodInvoker)(() =>
+                    {
+                        theform.setProgressTitle("x1 不放大，複製原始圖片...");
+                    }));
+
+                    if (theform.my.is_dir(targetPath))
+                    {
+                        theform.my.deltree(targetPath);
+                    }
+                    theform.my.mkdir(targetPath);
+
+                    string[] sourcePngs = theform.my.natsort(theform.my.glob(sourcePath, "*.png"));
+                    int total = sourcePngs.Count();
+                    if (total <= 0)
+                    {
+                        theform.Invoke((MethodInvoker)(() =>
+                        {
+                            MessageBox.Show("找不到可複製的來源 PNG...", "異常", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }));
+                        return false;
+                    }
+
+                    for (int i = 0; i < total; i++)
+                    {
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            return false;
+                        }
+                        string png = sourcePngs[i];
+                        string targetFile = Path.Combine(targetPath, theform.my.basename(png));
+                        theform.my.copy(png, targetFile);
+                        if (i % 10 == 0 || i == total - 1)
+                        {
+                            int done = i + 1;
+                            double p = theform.my.arduino_map(done, 0, total, 18.0, 87.0);
+                            theform.Invoke((MethodInvoker)(() =>
+                            {
+                                theform.setProgressTitle("x1 不放大，複製原始圖片... " + done.ToString() + " / " + total.ToString());
+                                theform.setProgress(p);
+                            }));
+                        }
+                    }
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    theform.Invoke((MethodInvoker)(() =>
+                    {
+                        MessageBox.Show("x1 複製原始圖片失敗...\r\n" + ex.Message, "異常", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }));
+                    return false;
+                }
             }, cancellationToken);
         }
         public async Task<bool> step5_aiPng_to_mp4(string workPath, string targetFile, CancellationToken cancellationToken)

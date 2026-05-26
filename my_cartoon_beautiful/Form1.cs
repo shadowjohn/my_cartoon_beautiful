@@ -132,7 +132,7 @@ namespace my_cartoon_beautiful
             if (!my.is_dir(TMP_PATH)) { my.mkdir(TMP_PATH); }
 
             // preset x 2
-            comboBox_ImageScale.SelectedIndex = 0;
+            comboBox_ImageScale.SelectedIndex = 1;
 
             // default aac
             comboBox_soundKind.SelectedIndex = 0;

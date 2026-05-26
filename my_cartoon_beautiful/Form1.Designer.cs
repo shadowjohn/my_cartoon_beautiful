@@ -182,6 +182,7 @@
             this.comboBox_ImageScale.Font = new System.Drawing.Font("微軟正黑體", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
             this.comboBox_ImageScale.FormattingEnabled = true;
             this.comboBox_ImageScale.Items.AddRange(new object[] {
+            "x 1",
             "x 2",
             "x 3",
             "x 4"});
