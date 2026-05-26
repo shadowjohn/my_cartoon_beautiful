@@ -13,6 +13,16 @@ namespace utility_app
 {
     public class myApp
     {
+        private const double ProgressStep2Start = 0.0;
+        private const double ProgressStep2End = 15.0;
+        private const double ProgressStep3End = 18.0;
+        private const double ProgressStep4PrepareEnd = 22.0;
+        private const double ProgressStep4End = 87.0;
+        private const double ProgressStep5Start = 88.0;
+        private const double ProgressStep5End = 97.0;
+        private const double ProgressStep5Done = 98.0;
+        private const double ProgressAllDone = 100.0;
+
         Form1 theform;
         //private bool isNeedStop = false;
         public myApp(Form1 f)
@@ -97,11 +107,11 @@ namespace utility_app
                         {
                             nowFrames = progressState.Frame;
                         }
-                        double p = 0.0;
+                        double p = ProgressStep2Start;
                         if (totalsFrame > 0)
                         {
-                            p = theform.my.arduino_map(nowFrames, 0, totalsFrame, 0.0, 15.0);
-                            p = (p >= 15) ? 15.0 : p;
+                            p = theform.my.arduino_map(nowFrames, 0, totalsFrame, ProgressStep2Start, ProgressStep2End);
+                            p = (p >= ProgressStep2End) ? ProgressStep2End : p;
                         }
                         long showFrames = nowFrames;
                         theform.Invoke((MethodInvoker)(() =>
@@ -145,7 +155,7 @@ namespace utility_app
                 }
                 theform.Invoke((MethodInvoker)(() =>
                 {
-                    theform.setProgress(15);
+                    theform.setProgress(ProgressStep2End);
                     theform.setProgressTitle("影像轉成 png: " + outputPngs.ToString() + " / " + totalsFrame.ToString());
                 }));
                 theform.my.unlink(logFile);
@@ -263,7 +273,7 @@ namespace utility_app
                             //Console.WriteLine(progressText);
                             theform.Invoke((MethodInvoker)(() =>
                             {
-                                theform.setProgress(18);
+                                theform.setProgress(ProgressStep3End);
                                 theform.setProgressTitle("影片分離出聲音完成");
                             }));
                         }
@@ -350,7 +360,7 @@ namespace utility_app
                     theform.Invoke((MethodInvoker)(() =>
                     {
                         theform.setProgressTitle("計算刪除重複影像後數量..." + step.ToString() + " / " + total.ToString());
-                        theform.setProgress(total == 0 ? 22 : theform.my.arduino_map(step, 0, total, 18.0, 22.0));
+                        theform.setProgress(total == 0 ? ProgressStep4PrepareEnd : theform.my.arduino_map(step, 0, total, ProgressStep3End, ProgressStep4PrepareEnd));
                     }));
                 }
                 step++;
@@ -444,8 +454,8 @@ namespace utility_app
                             theform.Invoke((MethodInvoker)(() =>
                             {
                                 theform.setProgressTitle($"高解析度影像轉檔... {nowPngs} / {totalsPngs}");
-                                double percentComplete = (double)nowPngs / totalsPngs * 100.0;
-                                double showPercent = theform.my.arduino_map(percentComplete, 0, 100.0, 22.0, 87.0);
+                                double percentComplete = (double)nowPngs / totalsPngs * ProgressAllDone;
+                                double showPercent = theform.my.arduino_map(percentComplete, 0, ProgressAllDone, ProgressStep4PrepareEnd, ProgressStep4End);
                                 theform.setProgress(showPercent);
                             }));
                             Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
@@ -535,7 +545,7 @@ namespace utility_app
                         if (i % 10 == 0 || i == total - 1)
                         {
                             int done = i + 1;
-                            double p = theform.my.arduino_map(done, 0, total, 18.0, 87.0);
+                            double p = theform.my.arduino_map(done, 0, total, ProgressStep3End, ProgressStep4End);
                             theform.Invoke((MethodInvoker)(() =>
                             {
                                 theform.setProgressTitle("x1 不放大，複製原始圖片... " + done.ToString() + " / " + total.ToString());
@@ -655,8 +665,8 @@ namespace utility_app
                             if (!string.IsNullOrEmpty(frame))
                             {
                                 long frames = Convert.ToInt64(frame);
-                                double p = theform.my.arduino_map(frames, 0, totalsPngs, 88.0, 97.0);
-                                p = (p >= 97.0) ? 97.0 : p;
+                                double p = theform.my.arduino_map(frames, 0, totalsPngs, ProgressStep5Start, ProgressStep5End);
+                                p = (p >= ProgressStep5End) ? ProgressStep5End : p;
                                 theform.Invoke((MethodInvoker)(() => theform.setProgress(p)));
                                 /*if (frames >= totalsPngs - 1)
                                 {
@@ -708,7 +718,7 @@ namespace utility_app
 
                 theform.Invoke((MethodInvoker)(() =>
                 {
-                    theform.setProgress(98);
+                    theform.setProgress(ProgressStep5Done);
                     theform.setProgressTitle("高解析度影像與聲音合併完成...");
                 }));
                 if (isCancel)
@@ -734,7 +744,7 @@ namespace utility_app
                     }
                     theform.Invoke((MethodInvoker)(() =>
                     {
-                        theform.setProgress(100.0);
+                        theform.setProgress(ProgressAllDone);
                         theform.setProgressTitle("高解析度影像與聲音合併完成...");
                     }));
                     return true;
