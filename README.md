@@ -52,8 +52,16 @@
 1. ffmpeg windows binary static (ffmpeg version N-116451-ge7d3ff8dcd-20240729)
 2. realesrgan-ncnn-vulkan (v0.2.0-windows)
 3. windows .net framework 4.6.2
+4. 建置用 NuGet：System.Resources.Extensions 4.7.1
 
 ## 版本說明
+開發中 (2026-05-27)：P0 穩定性修正
+1. 讓舊式 .NET Framework WinForms 專案可用新版 `dotnet build` 建置。
+2. 新增 `ProcessRunner`，集中處理外部 process 的 stdout/stderr、ExitCode、取消、timeout 與 log。
+3. `step2_sourceFile_to_png` 不再只靠 PNG 數量接近總幀數就提前成功，改為等待 ffmpeg 正式結束並檢查 ExitCode。
+4. step2 ffmpeg 失敗時保留 `tmp/*_step2_ffmpeg.log`，方便追錯。
+5. 新增 `tests/ProcessRunnerTests`，可用 `dotnet run --project tests\ProcessRunnerTests\ProcessRunnerTests.csproj` 驗證 process runner。
+
 V0.04 版 (2024-10-13)：更新內容
 14. (2024-10-12 Done) 轉檔魯冰花480p 會卡死在 video → png 轉換與聲音轉換的步驟
 通過微軟掃毒：[掃毒結果] https://www.microsoft.com/en-us/wdsi/submission/85571e6d-59d2-46c2-b0d5-be3e6ab2871a
