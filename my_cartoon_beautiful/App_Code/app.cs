@@ -177,32 +177,32 @@ namespace utility_app
 
             string soundkind = theform.comboBox_soundKind.Text.Trim();
             Console.WriteLine("soundkind: " + soundkind);
-            string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
+            string audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
             string sound_param = "";
             switch (soundkind.ToUpper())
             {
                 case "AAC":
-                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
+                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
                     sound_param = "-c:a aac -b:a 192k";
                     break;
                 case "LIBMP3LAME":
-                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
+                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
                     sound_param = "-c:a libmp3lame -q:a 4";
                     break;
                 case "OGG":
-                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".ogg");
+                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".ogg");
                     sound_param = "-c:a libvorbis -q:a 4";
                     break;
                 default:
                     // 原音
-                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
+                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
                     break;
             }
 
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
-                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vn {sound_param} \"{wav_file}\"",
+                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vn {sound_param} \"{audioFile}\"",
                 RedirectStandardOutput = false,
                 RedirectStandardError = false,
                 UseShellExecute = false,
@@ -249,9 +249,9 @@ namespace utility_app
                             Int64 duration = et - st;
                             theform.my.grid_updateRow(theform.logDataGridView, "將 影片分離聲音", "經過時間", duration + " 秒");
 
-                            if (theform.my.is_file(wav_file))
+                            if (theform.my.is_file(audioFile))
                             {
-                                Int64 fSize = theform.my.filesize(wav_file);
+                                Int64 fSize = theform.my.filesize(audioFile);
                                 if (fSize != last_file_size)
                                 {
                                     last_file_size = fSize;
@@ -579,22 +579,22 @@ namespace utility_app
             }));
 
             string soundkind = theform.comboBox_soundKind.Text.Trim();
-            string wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
+            string audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
 
             switch (soundkind.ToUpper())
             {
                 case "AAC":
-                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
+                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
                     break;
                 case "LIBMP3LAME":
-                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
+                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
                     break;
                 case "OGG":
-                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".ogg");
+                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".ogg");
                     break;
                 default:
                     // 原音
-                    wav_file = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
+                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
                     break;
             }
 
@@ -627,7 +627,7 @@ namespace utility_app
                 // -hwaccel dxva2
                 //libx264
                 // -progress \"{progressFilePath}\" -loglevel quiet
-                Arguments = $" -hwaccel auto -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{wav_file}\" -c:v \"{codec}\" -pix_fmt yuv420p -acodec copy \"{targetFile}\"",
+                Arguments = $" -hwaccel auto -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{audioFile}\" -c:v \"{codec}\" -pix_fmt yuv420p -acodec copy \"{targetFile}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
