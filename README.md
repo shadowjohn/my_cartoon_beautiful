@@ -46,7 +46,8 @@
 1. 選擇來源影像
 2. 選擇要存在哪
 3. 選擇影像放大倍數 x2 x3 x4 (越大越久...)
-4. 按下開始轉檔，等待成果
+4. 可視需求勾選「保留暫存」，方便除錯或留存中間 PNG
+5. 按下開始轉檔，等待成果
 
 ## 程式相依套件
 1. ffmpeg windows binary static (ffmpeg version N-116451-ge7d3ff8dcd-20240729)
@@ -55,6 +56,13 @@
 4. 建置用 NuGet：System.Resources.Extensions 4.7.1
 
 ## 版本說明
+開發中 (2026-05-27)：P1 穩定性與一致性修正
+1. 重複 frame 判斷改用 SHA-256，取代原本的 MD5。
+2. 修正 `deltree` 成功仍回傳 false 的問題，失敗時保留 `last_error`。
+3. 補回「保留暫存」UI 選項，轉檔中會鎖定，完成後會顯示暫存目錄。
+4. step2 進度改讀 ffmpeg `-progress pipe:1` 的 `frame=`，不再每秒掃描 PNG 目錄推估進度。
+5. 新增 `tests/UtilityTests`，可用 `dotnet run --project tests\UtilityTests\UtilityTests.csproj` 驗證 utility 行為。
+
 開發中 (2026-05-27)：P0 穩定性修正
 1. 讓舊式 .NET Framework WinForms 專案可用新版 `dotnet build` 建置。
 2. 新增 `ProcessRunner`，集中處理外部 process 的 stdout/stderr、ExitCode、取消、timeout 與 log。
@@ -108,4 +116,4 @@ V0.01 版 (2024-07-28)：初版簽入
 12. (2024-08-04 Done) 【V0.03】聲音格式：AAC libmp3lame OGG 原音可選擇
 13. 增加 x1 不放大倍率
 14. (2024-10-12 Done) 【V0.04】轉檔魯冰花會卡死在 video → png 轉換與聲音轉換的步驟
-15. 改用 sha256 取代 md5 hash
+15. (2026-05-27 Done) 改用 sha256 取代 md5 hash
