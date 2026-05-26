@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Code\app.cs" />
+    <Compile Include="App_Code\ffmpeg_progress.cs" />
     <Compile Include="App_Code\include.cs" />
     <Compile Include="App_Code\process_runner.cs" />
     <Compile Include="Form1.cs">

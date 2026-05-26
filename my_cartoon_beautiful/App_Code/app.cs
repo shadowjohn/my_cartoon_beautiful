@@ -56,7 +56,6 @@ namespace utility_app
                 theform.setProgressTitle("取得總幀數...: " + totalsFrame.ToString());
             }));
 
-            string progressFilePath = Path.Combine(workPath, "progress.txt");
             string sp = Path.Combine(workPath, "source");
             if (theform.my.is_dir(sp))
             {
@@ -66,8 +65,7 @@ namespace utility_app
             ProcessStartInfo startInfo = new ProcessStartInfo
             {
                 FileName = ffmpegBin,
-                // -progress \"{progressFilePath}\"
-                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vf \"fps=30\" -f image2  \"{workPath}\\source\\%08d.png\" ",
+                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vf \"fps=30\" -f image2 -nostats -progress pipe:1 \"{workPath}\\source\\%08d.png\" ",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -79,33 +77,40 @@ namespace utility_app
             return await Task.Run(async () =>
             {
                 string logFile = Path.Combine(Path.GetDirectoryName(workPath), Path.GetFileName(workPath) + "_step2_ffmpeg.log");
-                Task<ProcessRunResult> processTask = ProcessRunner.RunAsync(startInfo, cancellationToken, 0, logFile);
-                // 進度顯示仍用實際產生的 PNG 數，完成判斷交給 process exit code，避免 ffmpeg 尚未收尾就提前成功。
+                FfmpegProgressState progressState = new FfmpegProgressState();
+                object progressLock = new object();
+                Task<ProcessRunResult> processTask = ProcessRunner.RunAsync(startInfo, cancellationToken, 0, logFile, delegate (string line)
+                {
+                    lock (progressLock)
+                    {
+                        FfmpegProgressParser.TryApplyLine(progressState, line);
+                    }
+                });
+                // 進度顯示改讀 ffmpeg -progress 的 frame；完成判斷交給 process exit code，避免 ffmpeg 尚未收尾就提前成功。
                 Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 影片轉 png", "開始時間")));
                 try
                 {
                     while (!processTask.IsCompleted)
                     {
-                        long nowPngs = 0;
-                        try
+                        long nowFrames = 0;
+                        lock (progressLock)
                         {
-                            nowPngs = Convert.ToInt64(theform.my.glob(Path.Combine(workPath, "source"), "*.png").Count());
+                            nowFrames = progressState.Frame;
                         }
-                        catch { }
                         double p = 0.0;
                         if (totalsFrame > 0)
                         {
-                            p = theform.my.arduino_map(nowPngs, 0, totalsFrame, 0.0, 15.0);
+                            p = theform.my.arduino_map(nowFrames, 0, totalsFrame, 0.0, 15.0);
                             p = (p >= 15) ? 15.0 : p;
                         }
-                        long showPngs = nowPngs;
+                        long showFrames = nowFrames;
                         theform.Invoke((MethodInvoker)(() =>
                         {
-                            if (totalsFrame > 0 && showPngs >= totalsFrame)
+                            if (totalsFrame > 0 && showFrames >= totalsFrame)
                             {
-                                showPngs = totalsFrame;
+                                showFrames = totalsFrame;
                             }
-                            theform.setProgressTitle("影像轉成 png: " + showPngs.ToString() + " / " + totalsFrame.ToString());
+                            theform.setProgressTitle("影像轉成 png: " + showFrames.ToString() + " / " + totalsFrame.ToString());
                             theform.setProgress(p);
                         }));
                         Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));

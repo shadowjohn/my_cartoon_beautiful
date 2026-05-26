@@ -6,6 +6,7 @@
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\..\my_cartoon_beautiful\App_Code\ffmpeg_progress.cs" Link="FfmpegProgress.cs" />
     <Compile Include="..\..\my_cartoon_beautiful\App_Code\process_runner.cs" Link="ProcessRunner.cs" />
   </ItemGroup>
 </Project>

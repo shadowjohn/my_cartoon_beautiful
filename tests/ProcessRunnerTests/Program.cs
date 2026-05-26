@@ -27,6 +27,7 @@ internal static class Program
         await CapturesExitCodeAndOutputAsync();
         await CancelsRunningProcessAsync();
         await WritesLogFileAsync();
+        ParsesFfmpegProgressLines();
     }
 
     private static async Task CapturesExitCodeAndOutputAsync()
@@ -93,6 +94,17 @@ internal static class Program
         };
     }
 
+    private static void ParsesFfmpegProgressLines()
+    {
+        FfmpegProgressState state = new FfmpegProgressState();
+
+        AssertTrue(FfmpegProgressParser.TryApplyLine(state, "frame=42"), "parse frame");
+        AssertEqual(42, (int)state.Frame, "parsed frame value");
+        AssertTrue(FfmpegProgressParser.TryApplyLine(state, "progress=end"), "parse progress");
+        AssertEqual("end", state.Progress, "parsed progress value");
+        AssertFalse(FfmpegProgressParser.TryApplyLine(state, "fps=29.97"), "ignore unrelated line");
+    }
+
     private static ProcessStartInfo Pwsh(string arguments)
     {
         return new ProcessStartInfo
@@ -121,6 +133,14 @@ internal static class Program
     private static void AssertEqual(int expected, int actual, string name)
     {
         if (expected != actual)
+        {
+            throw new InvalidOperationException(name + " expected " + expected + " but got " + actual);
+        }
+    }
+
+    private static void AssertEqual(string expected, string actual, string name)
+    {
+        if (!string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(name + " expected " + expected + " but got " + actual);
         }
