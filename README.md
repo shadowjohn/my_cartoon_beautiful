@@ -45,7 +45,7 @@
 ## 使用方法
 1. 選擇來源影像
 2. 選擇要存在哪
-3. 選擇影像放大倍數 x2 x3 x4 (越大越久...)
+3. 選擇影像放大倍數 x1 x2 x3 x4 (x1 為不放大，越大越久...)
 4. 可視需求勾選「保留暫存」，方便除錯或留存中間 PNG
 5. 按下開始轉檔，等待成果
 
@@ -55,7 +55,23 @@
 3. windows .net framework 4.6.2
 4. 建置用 NuGet：System.Resources.Extensions 4.7.1
 
+## 建置與發佈
+```powershell
+dotnet build .\my_cartoon_beautiful\my_cartoon_beautiful.sln --configuration Release
+dotnet run --project .\tests\ProcessRunnerTests\ProcessRunnerTests.csproj
+dotnet run --project .\tests\UtilityTests\UtilityTests.csproj
+pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_release.ps1 -Version V0.05
+```
+
+發佈腳本會輸出 `artifacts\release\my_cartoon_beautiful_<版本>.zip` 與對應 `.sha256`。
+
 ## 版本說明
+開發中 (2026-05-27)：P2 功能整理與發佈流程
+1. 新增 x1 不放大模式，會跳過 Real-ESRGAN，直接複製原始 PNG 後合成 MP4。
+2. 將轉檔進度區間集中成常數，方便後續調整權重。
+3. 將音訊暫存變數命名由 `wav_file` 整理為 `audioFile`。
+4. 新增 `tools/build_release.ps1`，可自動 build、整理輸出、壓 zip、產 SHA-256。
+
 開發中 (2026-05-27)：P1 穩定性與一致性修正
 1. 重複 frame 判斷改用 SHA-256，取代原本的 MD5。
 2. 修正 `deltree` 成功仍回傳 false 的問題，失敗時保留 `last_error`。
@@ -114,6 +130,6 @@ V0.01 版 (2024-07-28)：初版簽入
 10. (2024-08-04 Done) 【V0.02】結束時的 MessageBox 置頂
 11. (2024-08-04 Done) 【V0.02】滑鼠經過 ㊉㊀ 會變成手指指標
 12. (2024-08-04 Done) 【V0.03】聲音格式：AAC libmp3lame OGG 原音可選擇
-13. 增加 x1 不放大倍率
+13. (2026-05-27 Done) 增加 x1 不放大倍率
 14. (2024-10-12 Done) 【V0.04】轉檔魯冰花會卡死在 video → png 轉換與聲音轉換的步驟
 15. (2026-05-27 Done) 改用 sha256 取代 md5 hash
