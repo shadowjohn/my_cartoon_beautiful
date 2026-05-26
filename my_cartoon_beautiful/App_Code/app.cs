@@ -68,122 +68,82 @@ namespace utility_app
                 FileName = ffmpegBin,
                 // -progress \"{progressFilePath}\"
                 Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vf \"fps=30\" -f image2  \"{workPath}\\source\\%08d.png\" ",
-                RedirectStandardOutput = false,
-                RedirectStandardError = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
 
             theform.setProgressTitle("影像轉成 png : " + totalsFrame.ToString());
 
-            return await Task.Run(() =>
+            return await Task.Run(async () =>
             {
-                using (Process process = Process.Start(startInfo))
+                string logFile = Path.Combine(Path.GetDirectoryName(workPath), Path.GetFileName(workPath) + "_step2_ffmpeg.log");
+                Task<ProcessRunResult> processTask = ProcessRunner.RunAsync(startInfo, cancellationToken, 0, logFile);
+                // 進度顯示仍用實際產生的 PNG 數，完成判斷交給 process exit code，避免 ffmpeg 尚未收尾就提前成功。
+                Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 影片轉 png", "開始時間")));
+                try
                 {
-                    // 獲取進度
-                    Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 影片轉 png", "開始時間")));
-                    try
+                    while (!processTask.IsCompleted)
                     {
-                        bool isCancel = false;
-                        long last_nowPngs = 0;
-                        Int64 last_changeDatetime = theform.my.time64();
-                        while (true) //!process.HasExited)
+                        long nowPngs = 0;
+                        try
                         {
-                            if (cancellationToken.IsCancellationRequested)
-                            {
-                                try
-                                {
-                                    Console.WriteLine("Do kill ffmpeg...");
-                                    isCancel = true;
-                                    process.Kill(); // 終止 ffmpeg 進程
-                                    process.Dispose();
-                                    Console.WriteLine("ffmpeg process killed.");
-                                    break;
-
-                                }
-                                catch (Exception ex)
-                                {
-                                    // 可能會因為進程已經退出而導致異常，忽略此類異常
-                                    Console.WriteLine($"Exception while trying to kill ffmpeg: {ex.Message}");
-                                }
-                                isCancel = true;
-                                cancellationToken.ThrowIfCancellationRequested();
-                                break;
-                            }
-                            try
-                            {
-                                var nowPngs = Convert.ToInt64(theform.my.glob(Path.Combine(workPath, "source"), "*.png").Count());
-                                if (nowPngs != last_nowPngs)
-                                {
-                                    last_nowPngs = nowPngs;
-                                    last_changeDatetime = theform.my.time64();
-                                }
-                                double p = theform.my.arduino_map(nowPngs, 0, totalsFrame, 0.0, 15.0);
-                                p = (p >= 15) ? 15.0 : p;
-                                theform.Invoke((MethodInvoker)(() =>
-                                {
-                                    if (nowPngs >= totalsFrame)
-                                    {
-                                        nowPngs = totalsFrame;
-                                    }
-                                    theform.setProgressTitle("影像轉成 png: " + nowPngs.ToString() + " / " + totalsFrame.ToString());
-                                    theform.setProgress(p);
-                                }));
-                                if (Math.Abs(totalsFrame - nowPngs) <= 5)
-                                {
-                                    Task.Delay(1000).Wait(); // 非阻塞的延遲
-                                    theform.Invoke((MethodInvoker)(() =>
-                                    {
-                                        if (nowPngs >= totalsFrame)
-                                        {
-                                            nowPngs = totalsFrame;
-                                        }
-                                        theform.setProgressTitle("影像轉成 png: " + nowPngs.ToString() + " / " + totalsFrame.ToString());
-                                        theform.setProgress(p);
-                                    }));
-                                    break;
-                                }
-                                // 如果進度大於 nowPngs / totalsFrame * 100，98% ，且超過30秒沒有變化，則認定正常完成
-                                if ((Convert.ToDouble(nowPngs) / Convert.ToDouble(totalsFrame)) * 100.0 >= 98.0 && theform.my.time64() - last_changeDatetime > 30)
-                                {
-                                    Task.Delay(1000).Wait(); // 非阻塞的延遲
-                                    theform.Invoke((MethodInvoker)(() =>
-                                    {
-                                        if (nowPngs >= totalsFrame)
-                                        {
-                                            nowPngs = totalsFrame;
-                                        }
-                                        theform.setProgressTitle("影像轉成 png: " + nowPngs.ToString() + " / " + totalsFrame.ToString());
-                                        theform.setProgress(p);
-                                    }));
-                                    break;
-                                }
-
-                                Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
-                                Int64 duration = et - st;
-                                theform.my.grid_updateRow(theform.logDataGridView, "將 影片轉 png", "經過時間", duration + " 秒");
-                                Task.Delay(1000).Wait(); // 非阻塞的延遲
-                            }
-                            catch
-                            {
-                                Task.Delay(1000).Wait(); // 非阻塞的延遲
-                            }
-                        }; // while
-                        if (isCancel)
-                        {
-                            return false;
+                            nowPngs = Convert.ToInt64(theform.my.glob(Path.Combine(workPath, "source"), "*.png").Count());
                         }
-                        theform.Invoke((MethodInvoker)(() => theform.setProgress(15)));
+                        catch { }
+                        double p = 0.0;
+                        if (totalsFrame > 0)
+                        {
+                            p = theform.my.arduino_map(nowPngs, 0, totalsFrame, 0.0, 15.0);
+                            p = (p >= 15) ? 15.0 : p;
+                        }
+                        long showPngs = nowPngs;
+                        theform.Invoke((MethodInvoker)(() =>
+                        {
+                            if (totalsFrame > 0 && showPngs >= totalsFrame)
+                            {
+                                showPngs = totalsFrame;
+                            }
+                            theform.setProgressTitle("影像轉成 png: " + showPngs.ToString() + " / " + totalsFrame.ToString());
+                            theform.setProgress(p);
+                        }));
+                        Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
+                        Int64 duration = et - st;
+                        theform.my.grid_updateRow(theform.logDataGridView, "將 影片轉 png", "經過時間", duration + " 秒");
+                        await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
                     }
-                    catch
+                }
+                catch (OperationCanceledException)
+                {
+                }
+
+                ProcessRunResult result = await processTask.ConfigureAwait(false);
+                long outputPngs = 0;
+                try
+                {
+                    outputPngs = Convert.ToInt64(theform.my.glob(Path.Combine(workPath, "source"), "*.png").Count());
+                }
+                catch { }
+                if (result.Cancelled)
+                {
+                    return false;
+                }
+                if (!result.Success || outputPngs <= 0)
+                {
+                    string summary = result.GetErrorSummary(1200);
+                    theform.Invoke((MethodInvoker)(() =>
                     {
-                        return false;
-                    }
+                        MessageBox.Show("影像轉成 PNG 失敗...\r\nExitCode: " + result.ExitCode.ToString() + "\r\nLog: " + logFile + "\r\n" + summary, "異常", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }));
+                    return false;
                 }
                 theform.Invoke((MethodInvoker)(() =>
                 {
-                    theform.setProgressTitle("影像轉成 png: " + totalsFrame.ToString() + " / " + totalsFrame.ToString());
+                    theform.setProgress(15);
+                    theform.setProgressTitle("影像轉成 png: " + outputPngs.ToString() + " / " + totalsFrame.ToString());
                 }));
+                theform.my.unlink(logFile);
                 return true;
             }, cancellationToken);
         }
