@@ -224,6 +224,7 @@ namespace my_cartoon_beautiful
                         txtOutput.Enabled = false;
                         comboBox_ImageScale.Enabled = false;
                         comboBox_soundKind.Enabled = false;
+                        checkBox_keepTemp.Enabled = false;
                         labelShowLog.Visible = true;
                         switch (labelShowLog.Text)
                         {
@@ -251,6 +252,7 @@ namespace my_cartoon_beautiful
                         txtOutput.Enabled = true;
                         comboBox_ImageScale.Enabled = true;
                         comboBox_soundKind.Enabled = true;
+                        checkBox_keepTemp.Enabled = true;
                         labelShowLog.Visible = false;
                         //logDataGridView.Rows.Clear();
                         //logDataGridView.Visible = false;
@@ -261,7 +263,7 @@ namespace my_cartoon_beautiful
         private async void btnRun_Click(object sender, EventArgs e)
         {
             //當 isDebug true 時，不刪資料
-            bool isDebug = false;
+            bool isDebug = checkBox_keepTemp.Checked;
             if (btnRun.Text == "開始轉檔")
             {
                 string sourceFile = txtSource.Text.Trim();
@@ -512,9 +514,17 @@ namespace my_cartoon_beautiful
                                 return;
                             }
                         }
+                        else
+                        {
+                            this.Invoke((MethodInvoker)(() =>
+                            {
+                                setProgress(100.0);
+                                setProgressTitle("保留工作目錄: " + workPath);
+                            }));
+                        }
                         et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
                         duration = et - st;
-                        my.grid_updateRow(logDataGridView, 5, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
+                        my.grid_updateRow(logDataGridView, 5, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), isDebug ? "保留" : "是" });
                     } // step 6 步驟6 清理工作目錄
                     //加上總時間
                     st = Convert.ToInt64(my.strtotime(my.grid_getRowValueFromNindNameAndCellName(logDataGridView, "檢查與建立工作目錄", "開始時間")));
@@ -522,7 +532,8 @@ namespace my_cartoon_beautiful
                     duration = et - Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s", st.ToString())));
                     my.grid_addRow(logDataGridView, new string[] { "結算", "總時間", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "完成" });
                     this.TopMost = true;
-                    MessageBox.Show(this, "工作完成", "通知", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    string doneMessage = isDebug ? "工作完成\r\n暫存檔保留於：" + workPath : "工作完成";
+                    MessageBox.Show(this, doneMessage, "通知", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     this.TopMost = false;
                     uiRunOrStop("STOP");
                 }

@@ -50,6 +50,7 @@
             this.logDataGridView = new System.Windows.Forms.DataGridView();
             this.label4 = new System.Windows.Forms.Label();
             this.comboBox_soundKind = new System.Windows.Forms.ComboBox();
+            this.checkBox_keepTemp = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.logDataGridView)).BeginInit();
             this.SuspendLayout();
             // 
@@ -250,11 +251,23 @@
             this.comboBox_soundKind.Size = new System.Drawing.Size(225, 48);
             this.comboBox_soundKind.TabIndex = 17;
             // 
+            // checkBox_keepTemp
+            // 
+            this.checkBox_keepTemp.AutoSize = true;
+            this.checkBox_keepTemp.Font = new System.Drawing.Font("微軟正黑體", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            this.checkBox_keepTemp.Location = new System.Drawing.Point(777, 246);
+            this.checkBox_keepTemp.Name = "checkBox_keepTemp";
+            this.checkBox_keepTemp.Size = new System.Drawing.Size(139, 35);
+            this.checkBox_keepTemp.TabIndex = 18;
+            this.checkBox_keepTemp.Text = "保留暫存";
+            this.checkBox_keepTemp.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1001, 421);
+            this.Controls.Add(this.checkBox_keepTemp);
             this.Controls.Add(this.comboBox_soundKind);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.logDataGridView);
@@ -310,6 +323,7 @@
         public System.Windows.Forms.DataGridView logDataGridView;
         private System.Windows.Forms.Label label4;
         public System.Windows.Forms.ComboBox comboBox_soundKind;
+        private System.Windows.Forms.CheckBox checkBox_keepTemp;
     }
 }
 
