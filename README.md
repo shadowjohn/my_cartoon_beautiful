@@ -66,6 +66,10 @@ pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_release.ps1 -Ver
 發佈腳本會輸出 `artifacts\release\my_cartoon_beautiful_<版本>.zip` 與對應 `.sha256`。
 
 ## 版本說明
+開發中 (2026-05-27)：CI 修正
+1. GitHub Actions workflow 更新 `actions/upload-artifact@v4`，避免 v3 退役造成 build 失敗。
+2. 同步更新 `actions/checkout@v4`、`microsoft/setup-msbuild@v2`、`NuGet/setup-nuget@v2`。
+
 開發中 (2026-05-27)：P2 功能整理與發佈流程
 1. 新增 x1 不放大模式，會跳過 Real-ESRGAN，直接複製原始 PNG 後合成 MP4。
 2. 將轉檔進度區間集中成常數，方便後續調整權重。
