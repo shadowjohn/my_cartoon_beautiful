@@ -1,0 +1,14 @@
+[
+  {
+    "source": "src/net.cpp",
+    "patch": "native/patches/ncnn-net.cpp.patch",
+    "originalSha256": "e004677fca2eb9b1c0a67808f1f07b4c38fcd6fc5b2ae56839bc0788c0338b59",
+    "patchedSha256": "bad28e674e80f8e6e7f5324bb706507844973531e49f53eb2ef3e7051b5378e3"
+  },
+  {
+    "source": "src/gpu.cpp",
+    "patch": "native/patches/ncnn-gpu.cpp.patch",
+    "originalSha256": "79a136d8b88c3a04e2f356517e24922e4943c80752114c5e42d79b7246bdc5a1",
+    "patchedSha256": "9a24257d4c750eae7715e3ca5391ce14248d24cc34d145b069bc8de014014620"
+  }
+]

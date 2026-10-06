@@ -1,0 +1,75 @@
+--- a/src/net.cpp
++++ b/src/net.cpp
+@@ -141,9 +141,7 @@
+         }
+     }
+ 
+-    cmd.submit_and_wait();
+-
+-    return 0;
++    return cmd.submit_and_wait();
+ }
+ #endif // NCNN_VULKAN
+ 
+@@ -1463,6 +1461,8 @@
+             return -1;
+         }
+ 
++        d->layers[i] = layer; // Own partial layers before any parse failure.
++
+ #if NCNN_VULKAN
+         if (opt.use_vulkan_compute)
+             layer->vkdev = d->vkdev;
+@@ -1522,7 +1522,7 @@
+         if (pdlr != 0)
+         {
+             NCNN_LOGE("ParamDict load_param %d %s failed", i, layer->name.c_str());
+-            continue;
++            return -1;
+         }
+ 
+         if (layer->support_int8_storage)
+@@ -1575,7 +1575,7 @@
+         if (lr != 0)
+         {
+             NCNN_LOGE("layer load_param %d %s failed", i, layer->name.c_str());
+-            continue;
++            return -1;
+         }
+ 
+         d->layers[i] = layer;
+@@ -1839,6 +1839,8 @@
+         }
+     }
+ 
++    if (ret != 0) return ret;
++
+ #if NCNN_VULKAN
+     if (opt.use_vulkan_compute)
+     {
+@@ -1876,6 +1878,8 @@
+         }
+     }
+ 
++    if (ret != 0) return ret;
++
+     if (opt.use_local_pool_allocator)
+     {
+         if (opt.blob_allocator == 0)
+@@ -1899,7 +1903,7 @@
+ #if NCNN_VULKAN
+     if (opt.use_vulkan_compute)
+     {
+-        d->upload_model();
++        ret = d->upload_model();
+     }
+ #endif // NCNN_VULKAN
+ 
+@@ -2065,6 +2069,7 @@
+     for (size_t i = 0; i < d->layers.size(); i++)
+     {
+         Layer* layer = d->layers[i];
++        if (!layer) continue;
+ 
+         Option opt1 = opt;
+         if (!layer->support_image_storage)

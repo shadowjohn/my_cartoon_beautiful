@@ -39,5 +39,38 @@
         "sha256": "9ff8d80bc228f0e557553fd5cfcefc67b682098e9bd6ab08dc7a7d2dc8ad4699"
       }
     ]
+  },
+  "realesrgan": {
+    "revision": "37026f49824c5cf84062e7c6a5dd71445dcf610f",
+    "abi": 1,
+    "sources": [
+      {
+        "name": "ncnn",
+        "file": "ncnn.zip",
+        "root": "ncnn-6125c9f47cd14b589de0521350668cf9d3d37e3c",
+        "url": "https://codeload.github.com/Tencent/ncnn/zip/6125c9f47cd14b589de0521350668cf9d3d37e3c",
+        "sha256": "7f60f561ac41bbf5dd36119619da17b1a3130110be7a7c38b4e4a217801609e4"
+      },
+      {
+        "name": "glslang",
+        "file": "glslang.zip",
+        "root": "glslang-4afd69177258d0636f78d2c4efb823ab6382a187",
+        "url": "https://codeload.github.com/KhronosGroup/glslang/zip/4afd69177258d0636f78d2c4efb823ab6382a187",
+        "sha256": "923b97874251141b6a573ae07e5c30ce1a87f15f9ef21bcb172a0bdeb281155f"
+      },
+      {
+        "name": "vulkanHeaders",
+        "file": "Vulkan-Headers.zip",
+        "root": "Vulkan-Headers-1.3.224",
+        "url": "https://codeload.github.com/KhronosGroup/Vulkan-Headers/zip/refs/tags/v1.3.224",
+        "sha256": "361efb7b931d1dc7ffface77d081f94be55b49285158a852f5aa3affd6f0e33e"
+      },
+      {
+        "name": "vulkanDef",
+        "file": "vulkan-1.def",
+        "url": "https://raw.githubusercontent.com/KhronosGroup/Vulkan-Loader/a0ab2f162ef2df46fc94ba39ae62e78e680a884d/loader/vulkan-1.def",
+        "sha256": "166014c0b24e6d6b728a05fed1ea4b6a123ed2ac5d98f63f3a176da4e93ed75d"
+      }
+    ]
   }
 }

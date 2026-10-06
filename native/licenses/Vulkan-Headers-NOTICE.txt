@@ -1,0 +1,27 @@
+Source: include/vulkan/vulkan.h
+/*
+** Copyright 2015-2022 The Khronos Group Inc.
+**
+** SPDX-License-Identifier: Apache-2.0
+*/
+
+Source: include/vulkan/vk_platform.h
+/*
+** Copyright 2014-2022 The Khronos Group Inc.
+**
+** SPDX-License-Identifier: Apache-2.0
+*/
+
+Source: include/vulkan/vulkan_core.h
+/*
+** Copyright 2015-2022 The Khronos Group Inc.
+**
+** SPDX-License-Identifier: Apache-2.0
+*/
+
+Source: include/vulkan/vulkan_win32.h
+/*
+** Copyright 2015-2022 The Khronos Group Inc.
+**
+** SPDX-License-Identifier: Apache-2.0
+*/

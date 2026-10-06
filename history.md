@@ -150,3 +150,11 @@ P2：
 - Implemented AAC192k, MP3q4, Vorbisq4 and PCM WAV via libavcodec/libavformat and filter-owned resampling/FIFO; no ffmpeg process.
 - Native audio smoke PASS: 48kHz mono sample count, click onset within one video frame, no-audio rejection, pre/in-flight cancellation and retry. AAC onset 1.021375s matches legacy priming; other modes 1.000041667s.
 - ADTS metadata duration is only an estimate; acceptance uses decoded PCM samples, not that estimate. MP4 mux/UI/package acceptance remains pending.
+
+## 2026-10-06 Phase A Task 4：Real-ESRGAN C ABI DLL
+
+- 固定 Real-ESRGAN/ncnn/glslang/Vulkan headers 與來源 SHA-256，使用 MSVC x64/static CRT 編譯 bridge；不安裝 Vulkan SDK、不替換系統 driver，build-only shader compiler 不隨產品執行。完整授權文字已收錄 native/licenses。
+- tools/build_native.ps1 -Configuration Release -RequireGpu 成功，CTest ABI/GPU 2/2 PASS：缺檔／空模型／截斷 param、非法尺度／stride／容量、並行 busy、tile 取消、destroy 中生命週期、重建後推論、模型倍率不符。GPU 為 RTX 5060 Ti。
+- 空模型負面測試抓到 pinned ncnn 在載入失敗後仍 create/upload；已用具原始／修補 SHA 的最小 patch 提前失敗並傳遞 GPU wait 錯誤，補 partial-param ownership/null cleanup 及未初始化 GPU flag。
+- 編譯踩雷：長來源路徑超過 MSVC include 限制，縮短 cache 目錄；新增 shader 檢查曾造成 dangling-else，灰階對照測試抓到255而非舊版130，補 braces 後通過。
+- 完整 script staging 成功；尚未代表 C# PNG 對照、UI、MP4 pipeline、長片或 release 包通過。Native upstream 有既有 CMake deprecation/字碼頁警告。
