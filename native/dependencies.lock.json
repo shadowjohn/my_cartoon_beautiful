@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "platform": "win-x64",
+  "ffmpeg": {
+    "binding": "FFmpeg.AutoGen",
+    "bindingVersion": "9.0.1.1",
+    "release": "autobuild-2026-09-30-13-08",
+    "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-30-13-08/ffmpeg-n9.0.2-17-g2a571b6068-win64-lgpl-shared-9.0.zip",
+    "sha256": "7157177b8a6cb2174c1650ba8c71b363f2c78cba5330f88c4c02cf5b2b880646",
+    "revision": "2a571b606854520cf89804d8030c8b328e621689",
+    "buildRevision": "6c9aec5fc9a72ec3abedd1fa84db141fa18cf52b",
+    "dlls": [
+      {
+        "name": "avcodec-63.dll",
+        "sha256": "525060f60b3d0171bb9e0ea4b2074a2ff07f5d96b2483a82d9e08fe2ece58e9c"
+      },
+      {
+        "name": "avdevice-63.dll",
+        "sha256": "e9e4306ac36778f2faceb1b3ee42152e9b16f10227d2315ae42d282d77c9105c"
+      },
+      {
+        "name": "avfilter-12.dll",
+        "sha256": "df6f94c43a04be9f3cedcf94b9c5085ae4186339b6828271d42055723eccc060"
+      },
+      {
+        "name": "avformat-63.dll",
+        "sha256": "7275053ebb1dfa708d45d8544ad94bf664e0cb534cd0f2ed979fdf024bc190b3"
+      },
+      {
+        "name": "avutil-61.dll",
+        "sha256": "a34c7ef846a2d353c1a6a266b22a001ccd42f6654ab92631a7196e961bdedffd"
+      },
+      {
+        "name": "swresample-7.dll",
+        "sha256": "1fbcea031ada11a15e609e209e1cd71a9c632f39bc4794190137b67351db677f"
+      },
+      {
+        "name": "swscale-10.dll",
+        "sha256": "9ff8d80bc228f0e557553fd5cfcefc67b682098e9bd6ab08dc7a7d2dc8ad4699"
+      }
+    ]
+  }
+}

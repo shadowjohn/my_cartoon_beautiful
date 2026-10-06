@@ -26,7 +26,7 @@ jobs:
       run: nuget restore my_cartoon_beautiful/my_cartoon_beautiful.sln
 
     - name: Build solution
-      run: msbuild my_cartoon_beautiful/my_cartoon_beautiful.sln /p:Configuration=Release /p:Platform="Any CPU"
+      run: msbuild my_cartoon_beautiful/my_cartoon_beautiful.sln /p:Configuration=Release /p:Platform="x64"
 
     - name: Archive build output
       uses: actions/upload-artifact@v4

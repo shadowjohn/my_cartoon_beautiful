@@ -109,3 +109,31 @@ P2：
 - 來源影片無音訊時能得到清楚錯誤或可跳過音訊。
 - Real-ESRGAN 執行失敗時不會假成功。
 - 暫存資料在成功/失敗/取消三種情境都符合預期。
+
+## 2026-10-06 Native DLL 整合可行性與 Phase A/B 範圍
+
+- 使用者確認 Phase A：取消 ffmpeg / Real-ESRGAN 外部 exe 呼叫，保留 PNG 暫存與現有轉檔流程；Phase B 再檢視舊程式改良空間。
+- 可行方向：FFmpeg.AutoGen + 匹配的 FFmpeg shared DLL；Real-ESRGAN C++ 核心另建 C ABI DLL，C# P/Invoke 呼叫。DLL／模型仍需交付，並非單一 exe。
+- 設計草案：docs/superpowers/specs/2026-10-06-native-dll-integration-design.md。尚未實作，也未凍結新套件／native binary 版本。
+- 現有程式已含 2026-05-27 後續 P0/P1/P2：step2 ProcessRunner/-progress、SHA-256 去重、x1、保留暫存、build resource 相容設定。上方「初評估」不可當作今天尚未修復的清單。
+- 本機驗證：Release build 成功（0 warnings/errors），ProcessRunnerTests PASS，UtilityTests PASS（既有 CS8981 警告）。初次 --no-restore 缺 System.Resources.Extensions；還原既有 NuGet 相依後重試通過，未修改產品程式。
+- ESRGAN source 位於 D:/mytools/Real-ESRGAN-ncnn-vulkan，HEAD 37026f4；已有 load/process 核心與 MIT license。ncnn/libwebp 子模組未初始化，Vulkan SDK 尚未定位；MSVC/CMake/runtime 存在，不代表 native build 已通過。
+- Phase A 必須處理 x64/ABI、native 錯誤回傳與安全取消，以及 release script 未複製 exe 旁 DLL 的缺口。Real-ESRGAN 模型讀取與不完整初始化清理的防護是 DLL 整合必要範圍。
+- 未驗證邊界：新 DLL 編譯、真實 GPU 推論、短片音畫對照、native 取消／記憶體、WinForms 人工操作與完整發佈包；未安裝 SDK、未發布或改動正式環境。
+
+## 2026-10-06 Phase A 設計確認與實作計畫
+
+- 使用者確認 native DLL 整合設計，另允許考慮從 .NET Framework 4.6.2 升至 4.7.2。
+- 據 Microsoft .NET Standard 2.0 相容性建議與本機 v4.7.2 targeting pack 盤點，將設計目標改為 .NET Framework 4.7.2 + x64；本輪僅改文件，產品 csproj 尚未切換。
+- 已建立 docs/superpowers/plans/2026-10-06-native-dll-integration.md，包含 9 個 task、C#/native 介面、分段驗收與 Phase B 邊界，並完成 self-review。
+- FFmpeg 候選已定位：AutoGen 9.0.1.1 + BtbN 2026-09-30 的 LGPL shared 9.0 build，plan 記錄 upstream SHA、asset digest 與 ABI majors。這是公開 metadata/source 查核，尚未下載或執行。
+- 本輪未安裝相依、編譯 DLL、修改轉檔程式或執行新 runtime 驗收。前輪 4.6.2 build/tests 通過不可視為 4.7.2/native 組合已通過。
+- 目前等使用者檢視實作計畫與選擇執行方式；Phase B 仍在 Phase A 驗收後。
+
+## 2026-10-06 Phase A Task 1：net472/x64 與 FFmpeg runtime
+
+- 在 codex/native-media-dll managed worktree 實作，原 checkout 保留。目標 framework 已改 v4.7.2、platform x64、Prefer32Bit=false，CI/platform/runtime 設定同步。
+- 鎖定 AutoGen 9.0.1.1 + FFmpeg LGPL shared 9.0 build；下載 archive 與 7 個 DLL SHA-256 已驗證，binary 保持 artifacts local-only。
+- net472 x64 smoke 先以未實作 loader RED，再驗證實際載入、任意 cwd、缺 DLL、錯誤 ABI 拒絕、PNG/AAC/MP3/Vorbis/PCM encoders、libopenh264 單幀 encode/decode 回讀 PASS；Release build 0 warnings/errors。
+- Legacy csproj 已 restore NuGet assets 但未自動提供編譯 reference，依既有 System.Resources.Extensions 作法追加 explicit HintPath/netstandard facade；未轉 SDK-style。
+- 本階段只完成 runtime，影片各步驟仍是舊流程，不代表 DLL 端到端或 UI/GPU/發佈驗收。
