@@ -265,3 +265,15 @@ P2：
 - 五次短片與十分鐘低解析度影片全部完成；長片 18,000 幀、去重 2 張。五次短片 idle handles 為 652/652/652/652/654，長片後 643，未呈現逐 job 持續增加；這不是高解析度 GPU 壓力或所有平台無洩漏保證。詳細 jobs.csv 與 full-native-smoke.log 位於 managed worktree ignored artifacts/acceptance。
 - 新乾淨包 layout／逐檔 SHA、異地 cwd／隔離 AppDomain 的 x1/x2 真實產品 steps 1–6 PASS／exit0；證據 artifacts/acceptance/package-2cb00c89c0ed4ddb9d1416f872cb316f。獨立來源／linkage／腳本 review 未發現其他需修正問題。
 - 本機真人成功轉檔是先前 runtime 的回饋；此次重編取得上述自動化證據，其他 GPU／高解析度長片／重編後真人操作未另驗證。接著需把 draft 的 v0.05 tag 對齊本次修正 commit、替換 source companion、發布並重跑遠端 Actions；原 tag commit 保留在主線歷史。
+
+## 2026-10-06 v0.05 正式發布
+
+- 已依使用者核准將 LGPL 修正提交 aeefc67125527ca4abf9f6dc4fe61bdc3e9e49fb 推至 main；v0.05 tag 從原先 50e5d25 對齊該提交。推送前比對遠端 main/tag，採 atomic push，僅 tag 使用精確舊 SHA 的 force-with-lease；main 為 fast-forward，原提交仍保留主線歷史。
+- GitHub Release 已於 2026-10-06 07:50:35 UTC 公開並設為 latest：https://github.com/shadowjohn/my_cartoon_beautiful/releases/tag/v0.05 。共 10 個附件；主程式 ZIP 75,702,699 bytes，SHA256 cfb0ce4fc60baf4e75ed6f25686c3329243195006b16ac271373aec7d3991704。
+- 最終主程式包與先前通過 isolated x1/x2 的 1,562 個 payload 檔案逐檔相同，只更新 generated package manifest 的 commit/time；layout/hash 再次 PASS。一般使用者僅需主程式 ZIP，產品與獨立 FFmpeg runtime ZIP 均無 FFmpeg CLI EXE。
+- application/native source companion 共 1,636 檔案，包含該 commit 的 1,629 個 Git blobs（含所有通知與六個模型）、五個固定上游輸入及 README/manifest；Git blob／逐檔 SHA／ZIP CRC PASS。SHA256 3db33358b710e352ee27130687b08d5aad220a030a658575ba44520f34c4a36d；draft 舊來源附件已替換。
+- FFmpeg source ZIP SHA256 01311161f0f4f36b3e1712663b8877a2dc30940de5f251445a80f5f61721f6a6；80 個相依 archive ZIP SHA256 9e96c78d72ca2c1c31d5727ae8bf6efd920a6cab051924781353b98de68b8072。SOURCES.md 說明對應／重建方式；SHA256SUMS.txt 的 9 筆內容與 GitHub 各 asset digest 全數相符。
+- 公開主程式／runtime／checksum URL 均 HTTP 200；下載公開 checksum 檔與本機 bytes 相同，公開 README Git blob 與 aeefc67 完全一致，latest API 確認非 draft 的 v0.05。完整記錄在 managed worktree ignored artifacts/release-v005-lgpl。
+- 新 public runtime 的 workflow_dispatch run 37432233617（head aeefc67）已 success，job 7m59s：https://github.com/shadowjohn/my_cartoon_beautiful/actions/runs/37432233617 。native ABI 1/1、app/smoke build 0 warnings/errors、audio/decode/runtime、ProcessRunner、Utility、package layout/hash 與 isolated x1 全數 PASS；log 實際回報 20261006-lgpl-no-gpl-deps 新 runtime。
+- Hosted runner 缺 nvcuda.dll，成功回退 OpenH264；遠端 GPU inference／NVENC 為 NOT-RUN。本機 NVENC x2–x4 已通過；其他 GPU／高解析度長片／重編後真人操作邊界仍保留。非失敗警告包括上游 CMake deprecation、UtilityTests 既有 CS8981 與 action Node20→24／punycode；完整遠端 log/JSON 位於 artifacts/acceptance/github-actions-37432233617。
+- 原 checkout 的 bin/Release 七個 DLL hashes 與新 lock 一致；artifacts/release/my_cartoon_beautiful_v0.05 及 ZIP 已同步公開包，layout/hash PASS。之前同名本機產物移至 artifacts/release/superseded-v0.05-before-lgpl-rebuild-20261006 保留，未刪除。
