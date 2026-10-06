@@ -196,3 +196,26 @@ P2：
 - 新鮮獨立reviewer只讀審查a3f1528..903c170，未發現Critical／Important問題；未再啟動review迴圈。實作位於codex/native-media-dll；原checkout的history/docs dirty狀態完整保留，未合併、push或發布。
 - 完整raw證據位於ignored artifacts/acceptance/endurance-monitor-20261006-131620-abc7b189（含DLLhash、log、CSV、獨立decode結果）；本機測試包位於artifacts/release/my_cartoon_beautiful_native-dev。
 - 已知驗證邊界：真人操作、不同GPU／高解析度長片、遠端CI、WMI事件級子程序追蹤，以及公開發布用完整對應source bundle仍未取得；Phase B舊程式改良留待Phase A實際試用後。
+
+## 2026-10-06 切回原專案供人工試用
+
+- 依使用者要求，原 checkout D:/mytools/my_cartoon_beautiful 已切至 codex/native-media-dll（c5fac23）；managed worktree 改為同一 commit 的 detached HEAD，保留原始建置與驗收資料。
+- 原 main 未提交的 history.md 與 docs/ 已完整保存至 Git stash 156db88d1cd9a35f3adb97b1cc7ea40b96c9ef0c（preserve-main-design-docs-before-native-trial-20261006）；目前分支已有更新後文件，未套回舊版。
+- 將已驗證 native runtime 複製到原 checkout 的 ignored artifacts/native-runtime；7 個 FFmpeg DLL manifest hash 與 bridge SHA256 複製比對通過。
+- 原路徑 Release x64 build 成功，0 warnings/errors；artifacts/release/my_cartoon_beautiful_native-trial 乾淨試用包 layout/hash PASS，可直接執行其中 my_cartoon_beautiful.exe。
+- 本輪僅驗證切換後編譯與試用包，不重複宣稱人工操作或其他 GPU 已驗收；未啟動 GUI、merge、push 或發布。
+
+## 2026-10-06 使用者人工試跑回饋
+
+- 切至 codex/native-media-dll 並提供本機試用包後，使用者回覆「可以耶，這樣安全多了」，確認本次實際試跑可用。
+- 此為使用者回報的本機操作證據；未另提供測試影片、倍率、音訊選項、取消操作或輸出檢查細節，不擴大為全部情境與其他 GPU 已驗收，也不視為安全稽核結果。
+- Phase B 舊程式檢視以目前 DLL 整合版本為基準；本輪僅補記回饋，未修改產品程式。
+- 使用者後續明確回報「成功轉檔了」：本機人工驗收已確認完成一次轉檔；影片規格、倍率、音訊選項與播放品質細節未提供，其他情境仍維持上述驗證邊界。
+
+## 2026-10-06 v0.05 版本升級
+
+- 使用者確認 DLL 版成功轉檔後，核准升為 v0.05，並要求同步 README.md。視窗／通知圖示／關於版本升至 0.05；AssemblyVersion／FileVersion 採 Windows 四段格式 0.5.0.0，ProductVersion 為 0.05。
+- README 更新日期、目前版本、DLL 相依說明、v0.05 更新紀錄與打包指令；舊公開下載連結保留為歷史版本，未虛構 v0.05 公開下載網址。
+- Release x64 與 NativeMediaSmokeTests build 成功，0 warnings/errors；新包 isolated x1/x2（GPU required）完整轉檔 PASS／exit0，含真實產品 steps 1–6；證據位於 artifacts/acceptance/package-65e8f2e4331741d7821ca9c419b485df。
+- 新 EXE 的 FileVersion 0.5.0.0、ProductVersion 0.05、AssemblyVersion 0.5.0.0 已實讀確認；package layout／逐檔 SHA 通過。既有 UTF-8 BOM 與 CRLF 格式維持，git diff --check 通過。
+- 本機發佈產物位於 ignored artifacts/release/my_cartoon_beautiful_v0.05；維持 codex/native-media-dll 分支，不合併 main 或上傳 GitHub。公開 binary 發佈仍需完成先前記錄的 FFmpeg 完整對應 source bundle；其他 GPU／高解析度長片與遠端 CI 邊界不變。
