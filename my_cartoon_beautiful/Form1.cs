@@ -18,6 +18,8 @@ namespace my_cartoon_beautiful
         static string TMP_PATH = "";
         //用來取消工作
         private CancellationTokenSource cts;
+        private Task activeJob;
+        internal bool ClosingAfterJob { get; private set; }
         public Form1()
         {
             InitializeComponent();
@@ -47,27 +49,19 @@ namespace my_cartoon_beautiful
                 notifyIcon1.ShowBalloonTip(1000);
             }
         }
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        private async void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-
-            // 檢查是否有正在進行的轉檔過程
-            if (cts != null && !cts.Token.IsCancellationRequested)
-            {
-                // 提示使用者是否要強制結束
-                var result = MessageBox.Show("目前正在進行轉檔，是否確定要強制結束？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-
-                if (result == DialogResult.No)
-                {
-                    // 如果使用者選擇不結束，取消關閉操作
-                    e.Cancel = true;
-                    return;
-                }
-                else
-                {
-                    // 如果使用者選擇結束，取消轉檔過程
-                    cts.Cancel();
-                }
-            }
+            if (activeJob == null || activeJob.IsCompleted) return;
+            e.Cancel = true;
+            if (ClosingAfterJob) return;
+            if (!cts.IsCancellationRequested && MessageBox.Show(this, "正在轉檔，取消並等候收尾後關閉？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+            ClosingAfterJob = true;
+            cts.Cancel();
+            btnRun.Enabled = false;
+            setProgressTitle("正在停止，等候目前工作收尾...");
+            try { await activeJob; }
+            catch (Exception ex) { Console.Error.WriteLine(ex); }
+            if (!IsDisposed) Close();
         }
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
@@ -78,8 +72,6 @@ namespace my_cartoon_beautiful
             notifyIcon1.Visible = false;
             notifyIcon1.Dispose();
 
-            // 執行退出邏輯
-            exit();
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -127,7 +119,7 @@ namespace my_cartoon_beautiful
             this.MaximizeBox = false; // 隱藏最大化按鈕
             notifyIcon1.Text = PROGRAM_NAME + " - " + PROGRAM_VERSION;
             this.Text = PROGRAM_NAME + " - " + PROGRAM_VERSION;
-            PWD = my.pwd();
+            PWD = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar);
             TMP_PATH = PWD + "\\tmp";
             if (!my.is_dir(TMP_PATH)) { my.mkdir(TMP_PATH); }
 
@@ -144,18 +136,6 @@ namespace my_cartoon_beautiful
 
             // 使用 Padding 調整內邊距
             labelShowLog.Padding = new Padding(3, 3, 1, 3); // 上下左右各 10 像素的內邊距
-        }
-
-        private void exit()
-        {
-            ShowInTaskbar = false;
-            notifyIcon1.Visible = false;
-            notifyIcon1.Dispose();
-            try
-            {
-                Environment.Exit(1);
-            }
-            catch { }
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -262,317 +242,128 @@ namespace my_cartoon_beautiful
         }
         private async void btnRun_Click(object sender, EventArgs e)
         {
-            //當 isDebug true 時，不刪資料
-            bool isDebug = checkBox_keepTemp.Checked;
-            if (btnRun.Text == "開始轉檔")
-            {
-                string sourceFile = txtSource.Text.Trim();
-                string targetFile = txtOutput.Text.Trim();
-                if (!my.is_file(sourceFile))
-                {
-                    MessageBox.Show("來源檔案，檔案不存在...");
-                    return;
+            if (activeJob != null) {
+                if (cts != null && !cts.IsCancellationRequested && MessageBox.Show(this, "停止轉檔嗎？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes) {
+                    cts.Cancel(); btnRun.Enabled = false; setProgressTitle("正在停止，等候目前工作收尾...");
                 }
-                if (targetFile == "")
-                {
-                    MessageBox.Show("輸出檔案，未指定...");
-                    return;
-                }
-                if (sourceFile == targetFile)
-                {
-                    MessageBox.Show("來源檔案，不可與輸出檔案相同...");
-                    return;
-                }
-                if (my.is_file(targetFile))
-                {
-                    //檔案已存在
-                    DialogResult result = MessageBox.Show("檔案已存在，要覆蓋嗎？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                    if (result == DialogResult.No)
-                    {
-                        return;
-                    }
-                }
-                string sn = my.subname(targetFile);
-                if (sn.ToLower() != "mp4")
-                {
-                    MessageBox.Show("輸出檔案，必須為 mp4...");
-                    return;
-                }
-                if (!my.isFileReadableWritable(targetFile))
-                {
-                    MessageBox.Show("輸出檔案無法寫入...", "囧rz");
-                    return;
-                }
-                //可以開始轉檔了!!?
-                uiRunOrStop("RUN");
-                // 清除所有行
-                logDataGridView.Rows.Clear();
-
-                // 清除所有列
-                logDataGridView.Columns.Clear();
-
-                // 清除所有選擇
-                logDataGridView.ClearSelection();
-
-
-                string json_columns = @"
-                    [
-                        {""id"":""步驟"",""name"":""步驟"",""width"":""80"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""},
-                        {""id"":""工作名稱"",""name"":""工作名稱"",""width"":""300"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""left"",""columnKind"":""text""},
-                        {""id"":""開始時間"",""name"":""開始時間"",""width"":""180"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""},
-                        {""id"":""經過時間"",""name"":""經過時間"",""width"":""120"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""right"",""columnKind"":""text""},
-                        {""id"":""結束時間"",""name"":""結束時間"",""width"":""180"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""},
-                        {""id"":""狀態"",""name"":""狀態"",""width"":""90"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""}                        
-                    ]
-                ";
-                //var ra = my.datatable_init(json_columns);
-                my.grid_init(logDataGridView, json_columns);
-
-                // 清空 DataTable 的內容
-                //ra.Clear();
-
-                // 設置 DataGridView 的一些屬性
-                // 要自動展開
-
-                logDataGridView.AllowUserToAddRows = false;
-                logDataGridView.AllowUserToDeleteRows = false;
-                logDataGridView.ReadOnly = true;
-                logDataGridView.RowHeadersVisible = false;
-                logDataGridView.ColumnHeadersVisible = true;
-                //logDataGridView.RowHeadersDefaultCellStyle.BackColor = System.Drawing.Color.Orange;
-                logDataGridView.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.Orange;
-                logDataGridView.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.Black;
-                logDataGridView.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("微軟正黑體", 13, System.Drawing.FontStyle.Bold);
-                logDataGridView.EnableHeadersVisualStyles = false;
-                logDataGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
-                logDataGridView.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
-                logDataGridView.AllowUserToResizeColumns = true;
-                logDataGridView.AllowUserToResizeRows = false;
-                foreach (DataGridViewColumn column in logDataGridView.Columns)
-                {
-                    column.SortMode = DataGridViewColumnSortMode.NotSortable;
-                    column.DefaultCellStyle.BackColor = System.Drawing.Color.White;
-                    column.DefaultCellStyle.Font = new System.Drawing.Font("微軟正黑體", 12, System.Drawing.FontStyle.Bold);
-                }
-
-                logDataGridView.Refresh();
-
-                this.Invoke((MethodInvoker)(() =>
-                {
-                    setProgressTitle("轉檔開始...");
-                    setProgress(0.00f);
-                }));
-                string dt = my.date("YmdHis");
-                //dt = "20240729005107";
-                string workPath = Path.Combine(TMP_PATH, dt);
-
-                try
-                {
-                    //檢查與建立工作目錄...
-                    //把步驟一寫到 logDataGridView
-                    long st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    long et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    Int64 duration = 0;
-                    bool success = true;
-                    {
-                        my.grid_addRow(logDataGridView, new string[] { "步驟1", "檢查與建立工作目錄", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-
-                        if (!App.step1_checkWorkPath(workPath))
-                        {
-                            uiRunOrStop("STOP");
-                            try { if (!isDebug) { my.deltree(workPath); } } catch { }
-                            cts = null;
-                            et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                            duration = et - st;
-                            my.grid_updateRow(logDataGridView, 0, new string[] { "步驟1", "檢查與建立工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
-                            return;
-                        }
-                        //將 影片轉 png 
-                        Task.Delay(1000).Wait();
-                        cts = new CancellationTokenSource();
-
-                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        duration = et - st;
-                        my.grid_updateRow(logDataGridView, 0, new string[] { "步驟1", "檢查與建立工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
-                    }  // step 1 步驟1 檢查與建立工作目錄
-
-                    {
-                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        my.grid_addRow(logDataGridView, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-                        success = await App.step2_sourceFile_to_png(workPath, sourceFile, cts.Token);
-                        if (!success)
-                        {
-                            uiRunOrStop("STOP");
-                            try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
-                            cts = null;
-                            et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                            duration = et - st;
-                            //my.grid_updateRow(logDataGridView, 1, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
-                            my.grid_updateRow(logDataGridView, "將 影片轉 png", "經過時間", duration.ToString() + " 秒");
-                            my.grid_updateRow(logDataGridView, "將 影片轉 png", "結束時間", my.date());
-                            my.grid_updateRow(logDataGridView, "將 影片轉 png", "狀態", "失敗");
-                            return;
-                        }
-                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        duration = et - st;
-                        my.grid_updateRow(logDataGridView, 1, new string[] { "步驟2", "將 影片轉 png", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
-                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    } // step 2 步驟2 將 影片轉 png                    
-
-                    {
-
-                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        my.grid_addRow(logDataGridView, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-
-                        cts = new CancellationTokenSource();
-                        Task.Delay(1000).Wait();
-                        success = await App.step3_sourceFile_to_wav(workPath, sourceFile, targetFile, cts.Token);
-                        if (!success)
-                        {
-                            uiRunOrStop("STOP");
-                            try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
-                            cts = null;
-                            et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                            duration = et - st;
-                            //my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
-                            my.grid_updateRow(logDataGridView, "將 影片分離聲音", "經過時間", duration.ToString() + " 秒");
-                            my.grid_updateRow(logDataGridView, "將 影片分離聲音", "結束時間", my.date());
-                            my.grid_updateRow(logDataGridView, "將 影片分離聲音", "狀態", "失敗");
-                            return;
-                        }
-                        //將 原影像 png 用 ai 轉成高解析度
-
-                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        duration = et - st;
-                        my.grid_updateRow(logDataGridView, 2, new string[] { "步驟3", "將 影片分離聲音", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
-                    } // step 3 步驟3 將 影片分離聲音
-
-                    {
-                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        my.grid_addRow(logDataGridView, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-                        cts = new CancellationTokenSource();
-                        Task.Delay(1000).Wait();
-                        success = await App.step4_sourcePng_to_aiPng(workPath, cts.Token);
-                        if (!success)
-                        {
-                            uiRunOrStop("STOP");
-                            try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
-                            cts = null;
-                            et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                            duration = et - st;
-                            my.grid_updateRow(logDataGridView, 3, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
-                            return;
-                        }
-
-                        //將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4 
-                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        duration = et - st;
-                        my.grid_updateRow(logDataGridView, 3, new string[] { "步驟4", "將 原影像 png 用 ai 轉成高解析度", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
-
-                    } // step 4 步驟4 將 原影像 png 用 ai 轉成高解析度
-
-                    {
-                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        my.grid_addRow(logDataGridView, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-
-                        cts = new CancellationTokenSource();
-                        Task.Delay(1000).Wait();
-                        success = await App.step5_aiPng_to_mp4(workPath, targetFile, cts.Token);
-                        if (!success)
-                        {
-                            uiRunOrStop("STOP");
-                            try { await Task.Run(() => { if (!isDebug) { my.deltree(workPath); } }); } catch { }
-                            cts = null;
-                            et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                            duration = et - st;
-                            my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString(), my.date("Y-m-d H:i:s", et.ToString()), "失敗" });
-                            return;
-                        }
-
-                        cts = new CancellationTokenSource();
-                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        duration = et - st;
-                        my.grid_updateRow(logDataGridView, 4, new string[] { "步驟5", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "是" });
-                    } // step 5 步驟5 將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4
-
-                    {
-                        st = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        my.grid_addRow(logDataGridView, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), "", "", "" });
-
-
-                        Task.Delay(1000).Wait();
-                        if (!isDebug)
-                        {
-                            success = await App.step6_remove_workPath(workPath, cts.Token);
-                            if (!success)
-                            {
-                                uiRunOrStop("STOP");
-                                cts = null;
-                                et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                                duration = et - st;
-                                my.grid_updateRow(logDataGridView, 5, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "否" });
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            this.Invoke((MethodInvoker)(() =>
-                            {
-                                setProgress(100.0);
-                                setProgressTitle("保留工作目錄: " + workPath);
-                            }));
-                        }
-                        et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                        duration = et - st;
-                        my.grid_updateRow(logDataGridView, 5, new string[] { "步驟6", "清理工作目錄", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), isDebug ? "保留" : "是" });
-                    } // step 6 步驟6 清理工作目錄
-                    //加上總時間
-                    st = Convert.ToInt64(my.strtotime(my.grid_getRowValueFromNindNameAndCellName(logDataGridView, "檢查與建立工作目錄", "開始時間")));
-                    et = Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s")));
-                    duration = et - Convert.ToInt64(my.strtotime(my.date("Y-m-d H:i:s", st.ToString())));
-                    my.grid_addRow(logDataGridView, new string[] { "結算", "總時間", my.date("Y-m-d H:i:s", st.ToString()), duration.ToString() + " 秒", my.date("Y-m-d H:i:s", et.ToString()), "完成" });
-                    this.TopMost = true;
-                    string doneMessage = isDebug ? "工作完成\r\n暫存檔保留於：" + workPath : "工作完成";
-                    MessageBox.Show(this, doneMessage, "通知", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    this.TopMost = false;
-                    uiRunOrStop("STOP");
-                }
-                catch (OperationCanceledException)
-                {
-                    // 處理取消操作的後續行為
-                    uiRunOrStop("STOP");
-                    cts = null;
-                }
-                finally
-                {
-                    if (cts != null)
-                    {
-                        cts.Dispose();
-                    }
-                    cts = null;
-                }
-
+                return;
             }
-            else
-            {
-                DialogResult result = MessageBox.Show("停止轉檔嗎？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (result == DialogResult.Yes)
-                {
+            cts = new CancellationTokenSource();
+            try { activeJob = RunJobAsync(cts.Token); await activeJob; }
+            catch (Exception ex) { Console.Error.WriteLine(ex); if (!ClosingAfterJob) MessageBox.Show(this, ex.Message, "轉檔失敗"); }
+            finally {
+                cts.Dispose(); cts = null; activeJob = null;
+                if (!IsDisposed && !ClosingAfterJob) { uiRunOrStop("STOP"); btnRun.Enabled = true; }
+            }
+        }
+        private async Task RunJobAsync(CancellationToken token)
+        {
+            bool keepTemp = checkBox_keepTemp.Checked;
+            string sourceFile = txtSource.Text.Trim(), targetFile = txtOutput.Text.Trim();
+            if (!File.Exists(sourceFile)) { MessageBox.Show(this, "來源檔案不存在..."); return; }
+            if (string.IsNullOrWhiteSpace(targetFile)) { MessageBox.Show(this, "未指定輸出檔案..."); return; }
+            sourceFile = Path.GetFullPath(sourceFile); targetFile = Path.GetFullPath(targetFile);
+            if (string.Equals(sourceFile, targetFile, StringComparison.OrdinalIgnoreCase)) { MessageBox.Show(this, "來源與輸出檔案不可相同..."); return; }
+            if (!string.Equals(Path.GetExtension(targetFile), ".mp4", StringComparison.OrdinalIgnoreCase)) { MessageBox.Show(this, "輸出必須為 MP4..."); return; }
+            if (File.Exists(targetFile) && MessageBox.Show(this, "檔案已存在，要覆蓋嗎？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+            uiRunOrStop("RUN");
+            // 清除所有行
+            logDataGridView.Rows.Clear();
 
-                    // kill all ?
-                    if (cts != null)
-                    {
-                        try
-                        {
-                            cts.Cancel();
-                        }
-                        catch { }
-                    }
-                    uiRunOrStop("STOP");
-                    return;
-                }
+            // 清除所有列
+            logDataGridView.Columns.Clear();
+
+            // 清除所有選擇
+            logDataGridView.ClearSelection();
+
+
+            string json_columns = @"
+                [
+                    {""id"":""步驟"",""name"":""步驟"",""width"":""80"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""},
+                    {""id"":""工作名稱"",""name"":""工作名稱"",""width"":""300"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""left"",""columnKind"":""text""},
+                    {""id"":""開始時間"",""name"":""開始時間"",""width"":""180"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""},
+                    {""id"":""經過時間"",""name"":""經過時間"",""width"":""120"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""right"",""columnKind"":""text""},
+                    {""id"":""結束時間"",""name"":""結束時間"",""width"":""180"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""},
+                    {""id"":""狀態"",""name"":""狀態"",""width"":""90"",""display"":""true"",""headerAlign"":""center"",""cellAlign"":""center"",""columnKind"":""text""}                    
+                ]
+            ";
+            //var ra = my.datatable_init(json_columns);
+            my.grid_init(logDataGridView, json_columns);
+
+            // 清空 DataTable 的內容
+            //ra.Clear();
+
+            // 設置 DataGridView 的一些屬性
+            // 要自動展開
+
+            logDataGridView.AllowUserToAddRows = false;
+            logDataGridView.AllowUserToDeleteRows = false;
+            logDataGridView.ReadOnly = true;
+            logDataGridView.RowHeadersVisible = false;
+            logDataGridView.ColumnHeadersVisible = true;
+            //logDataGridView.RowHeadersDefaultCellStyle.BackColor = System.Drawing.Color.Orange;
+            logDataGridView.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.Orange;
+            logDataGridView.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.Black;
+            logDataGridView.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("微軟正黑體", 13, System.Drawing.FontStyle.Bold);
+            logDataGridView.EnableHeadersVisualStyles = false;
+            logDataGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
+            logDataGridView.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+            logDataGridView.AllowUserToResizeColumns = true;
+            logDataGridView.AllowUserToResizeRows = false;
+            foreach (DataGridViewColumn column in logDataGridView.Columns)
+            {
+                column.SortMode = DataGridViewColumnSortMode.NotSortable;
+                column.DefaultCellStyle.BackColor = System.Drawing.Color.White;
+                column.DefaultCellStyle.Font = new System.Drawing.Font("微軟正黑體", 12, System.Drawing.FontStyle.Bold);
             }
 
+            logDataGridView.Refresh();
+
+            setProgressTitle("轉檔開始..."); setProgress(0.0);
+            string workPath = Path.Combine(TMP_PATH, DateTime.Now.ToString("yyyyMMddHHmmss") + "-" + Guid.NewGuid().ToString("N"));
+            string currentStage = null;
+            var total = System.Diagnostics.Stopwatch.StartNew();
+            try {
+                string[] names = { "檢查與建立工作目錄", "將 影片轉 png", "將 影片分離聲音", "將 原影像 png 用 ai 轉成高解析度", "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4" };
+                for (int i = 0; i < names.Length; i++) {
+                    token.ThrowIfCancellationRequested(); currentStage = names[i];
+                    my.grid_addRow(logDataGridView, new string[] { "步驟" + (i + 1), currentStage, my.date(), "", "", "" });
+                    var timer = System.Diagnostics.Stopwatch.StartNew();
+                    bool success;
+                    switch (i) {
+                        case 0: success = App.step1_checkWorkPath(workPath); break;
+                        case 1: success = await App.step2_sourceFile_to_png(workPath, sourceFile, token); break;
+                        case 2: success = await App.step3_sourceFile_to_wav(workPath, sourceFile, targetFile, token); break;
+                        case 3: success = await App.step4_sourcePng_to_aiPng(workPath, token); break;
+                        default: success = await App.step5_aiPng_to_mp4(workPath, targetFile, token); break;
+                    }
+                    my.grid_updateRow(logDataGridView, currentStage, "經過時間", timer.Elapsed.TotalSeconds.ToString("0.0") + " 秒");
+                    my.grid_updateRow(logDataGridView, currentStage, "結束時間", my.date());
+                    my.grid_updateRow(logDataGridView, currentStage, "狀態", success ? "是" : "失敗");
+                    if (!success) { setProgressTitle("轉檔失敗"); return; }
+                }
+                currentStage = "清理工作目錄";
+                my.grid_addRow(logDataGridView, new string[] { "步驟6", currentStage, my.date(), "", "", "" });
+                if (!keepTemp && !await App.step6_remove_workPath(workPath, CancellationToken.None)) {
+                    my.grid_updateRow(logDataGridView, currentStage, "狀態", "失敗"); return;
+                }
+                my.grid_updateRow(logDataGridView, currentStage, "狀態", keepTemp ? "保留" : "是");
+                my.grid_updateRow(logDataGridView, currentStage, "結束時間", my.date());
+                setProgress(100.0); setProgressTitle(keepTemp ? "暫存檔保留於: " + workPath : "工作完成");
+                my.grid_addRow(logDataGridView, new string[] { "結算", "總時間", "", total.Elapsed.TotalSeconds.ToString("0.0") + " 秒", my.date(), "完成" });
+                if (!ClosingAfterJob) MessageBox.Show(this, keepTemp ? "工作完成\r\n暫存檔保留於：" + workPath : "工作完成", "通知", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (OperationCanceledException) {
+                if (currentStage != null) my.grid_updateRow(logDataGridView, currentStage, "狀態", "已取消");
+                setProgressTitle("已取消");
+            }
+            finally {
+                // Every awaited worker has released its native handles before temp cleanup or UI reuse.
+                if (!keepTemp && Directory.Exists(workPath)) {
+                    try { await Task.Run(() => Directory.Delete(workPath, true)); }
+                    catch (Exception ex) { Console.Error.WriteLine(ex); if (!ClosingAfterJob) MessageBox.Show(this, "暫存清理失敗：" + workPath + "\r\n" + ex.Message); }
+                }
+            }
         }
 
         private void button3_Click(object sender, EventArgs e)

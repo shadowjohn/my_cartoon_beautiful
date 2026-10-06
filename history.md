@@ -166,3 +166,11 @@ P2：
 - 舊 v0.2 exe 比較：MAE 0.09487576/0.09206211/0.08833143，最大差值皆4/255；未宣稱逐像素一致。另以相同 pinned ncnn／shader／compiler 編譯未修改上游核心，三倍率均與 DLL MAE0/max0。tools/prepare_realesrgan_reference.ps1 可重現，diff32 圖留 artifacts。測試要求 rebuilt-reference 精確一致，legacy max4/MAE0.12 內。
 - GPU alpha 路徑在新舊 core 都觸發 VK_ERROR_DEVICE_LOST；BGRA 改以 ncnn CPU bicubic 處理 alpha，GPU RGB 算法不變。小於11x11輸入明確拒絕，避免原核心單次鏡射 padding 越界。
 - 本機 native/managed 圖片驗證通過；WinForms 還未改用這些元件，MP4 完整流程與發佈／長片仍 pending。
+
+## 2026-10-06 Phase A Tasks 6–8：完整 DLL 流程與取消
+
+- step2–step5 全部改為 managed/native DLL 呼叫；維持 PNG、30fps、SHA-256 去重、x1–x4 與四種音訊。x1 不載入 AI DLL；確定重複的測試為59次推論補回60張，來源PNG保留供診斷。
+- native MP4 完整回讀影音後才原子替換目標；錯誤與取消保留既有目標 bytes。四音訊 click 偏移0.04ms／AAC21.375ms，均在1/30秒內。x1小尺寸 NVENC 真正初始化失敗後回退 OpenH264；x2–x4 真正以 NVENC 完成60張短片。奇數寬高 yuv420p 明確拒絕。
+- WinForms 單一 CTS/activeJob、GUID 工作目录、停止後等待、關窗 await worker/native cleanup；移除 Environment.Exit 與每階段重設 CTS/阻塞延遲。失敗／取消的非保留暫存於 awaited worker 結束後清理。
+- UI 啟動測試發現 Resources.Extensions 4.0.0.0/4.0.1.0 繫結不符，補正確 binding redirect；真實 WinForms message loop 關窗等待測試 PASS。native decode/audio/upscale 取消後重試與 Release build PASS，兩組既有測試 PASS。
+- 以上為自動化本機證據；真人操作、完整乾淨 release package、長片與記憶體趨勢仍待 Task9。未發布、未push。

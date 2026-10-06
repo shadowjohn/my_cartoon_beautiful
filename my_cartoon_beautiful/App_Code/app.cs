@@ -30,12 +30,8 @@ namespace utility_app
         {
             try
             {
-                //檢查工作目錄是否存在，不存就建立，已存在就移除
-                if (theform.my.is_dir(workPath))
-                {
-                    theform.my.deltree(workPath);
-                }
-                theform.my.mkdir(workPath);
+                if (Directory.Exists(workPath)) throw new IOException("Work directory already exists: " + workPath);
+                Directory.CreateDirectory(workPath);
                 return true;
             }
             catch (Exception ex)
@@ -61,7 +57,7 @@ namespace utility_app
             catch (OperationCanceledException) { throw; }
             catch (Exception ex) {
                 Console.Error.WriteLine(ex);
-                if (!theform.IsDisposed && !theform.Disposing) MessageBox.Show(theform, ex.Message, "轉檔失敗", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!theform.IsDisposed && !theform.Disposing && !theform.ClosingAfterJob) MessageBox.Show(theform, ex.Message, "轉檔失敗", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
         }
@@ -132,30 +128,10 @@ namespace utility_app
         }
         public async Task<bool> step6_remove_workPath(string workPath, CancellationToken cancellationToken)
         {
-            return await Task.Run(() =>
-            {
-                try
-                {
-                    theform.Invoke((MethodInvoker)(() =>
-                    {
-                        theform.setProgressTitle("移除工作目錄區...");
-                    }));
-                    if (theform.my.is_dir(workPath))
-                    {
-                        theform.my.deltree(workPath);
-                    }
-                    theform.Invoke((MethodInvoker)(() =>
-                    {
-                        theform.setProgress(ProgressAllDone);
-                        theform.setProgressTitle("高解析度影像與聲音合併完成...");
-                    }));
-                    return true;
-                }
-                catch
-                {
-                    return false;
-                }
-            });
+            theform.setProgressTitle("清理工作目錄...");
+            bool ok = await RunNativeStage(() => { if (Directory.Exists(workPath)) Directory.Delete(workPath, true); }, cancellationToken);
+            if (ok) theform.setProgress(ProgressAllDone);
+            return ok;
         }
     }
 }
