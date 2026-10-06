@@ -5,7 +5,7 @@ namespace utility_app
     public enum AudioMode { Aac, Mp3, Vorbis, PcmWav }
     public enum EncoderPreference { PreferNvenc, SoftwareOnly }
     public sealed class MediaInfo { public TimeSpan? Duration; public int Width, Height; public bool HasVideo, HasAudio; }
-    public sealed class FrameSequence { public string DirectoryPath; public int Count, Width, Height; public int SarNumerator=1, SarDenominator=1; public TimeSpan SourceStartTime; }
+    public sealed class FrameSequence { public string DirectoryPath; public int Count, Width, Height, UniqueFrameCount; public int SarNumerator=1, SarDenominator=1; public TimeSpan SourceStartTime; }
     public sealed class AudioAsset { public string Path; public AudioMode Mode; public TimeSpan Duration, SourceStartTime; }
     public sealed class MediaProgress { public string Stage; public long Completed; public long? Total; }
     public sealed class NativeMediaException : Exception

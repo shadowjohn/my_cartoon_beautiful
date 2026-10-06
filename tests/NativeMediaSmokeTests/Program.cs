@@ -21,6 +21,7 @@ internal static class Program
             try { Environment.CurrentDirectory = Path.GetTempPath(); FfmpegRuntime.Load(native); }
             finally { Environment.CurrentDirectory = original; }
             RuntimeTests.Run();
+            if(args.Contains("--pipeline-stages")) PipelineTests.Run(new FfmpegMediaBackend(runtime));
             if(args.Contains("--upscale")) UpscaleTests.Run();
             if(args.Contains("--audio")) AudioTests.Run(new FfmpegMediaBackend(runtime));
             if(args.Contains("--decode")) DecodeTests.Run(new FfmpegMediaBackend(runtime));

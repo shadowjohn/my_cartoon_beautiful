@@ -47,523 +47,81 @@ namespace utility_app
                 return false;
             }
         }
-        public async Task<bool> step2_sourceFile_to_png(string workPath, string sourceFile, CancellationToken cancellationToken)
+        private IMediaBackend backend;
+        private MediaInfo mediaInfo;
+        private FrameSequence frames;
+        private AudioAsset audio;
+        private static string BinaryPath(params string[] parts)
         {
-            string ffmpegBin = Path.Combine(theform.PWD, "binary", "ffmpeg.exe");
-            if (!theform.my.is_file(ffmpegBin))
-            {
-                MessageBox.Show("轉檔工具 " + ffmpegBin + " 不存在...", "異常", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "binary");
+            foreach (string part in parts) path = Path.Combine(path, part);
+            return path;
+        }
+        private IMediaBackend Backend { get { return backend ?? (backend = new FfmpegMediaBackend(FfmpegRuntime.Load(BinaryPath("native", "ffmpeg")))); } }
+        private async Task<bool> RunNativeStage(Action action, CancellationToken token)
+        {
+            try { await Task.Run(action, token); token.ThrowIfCancellationRequested(); return true; }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex) {
+                Console.Error.WriteLine(ex);
+                if (!theform.IsDisposed && !theform.Disposing) MessageBox.Show(theform, ex.Message, "轉檔失敗", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("取得總幀數...");
-            }));
-            long totalsFrame = theform.my.getMovieTotalFrames(workPath, ffmpegBin, sourceFile);
-            Console.WriteLine("總幀數: " + totalsFrame.ToString());
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("取得總幀數...: " + totalsFrame.ToString());
-            }));
-
-            string sp = Path.Combine(workPath, "source");
-            if (theform.my.is_dir(sp))
-            {
-                theform.my.deltree(sp);
+        }
+        private sealed class StageProgress : IProgress<MediaProgress>
+        {
+            private readonly Form1 form;
+            private readonly Action<MediaProgress> update;
+            private readonly Stopwatch clock = Stopwatch.StartNew();
+            private long last = -100;
+            internal StageProgress(Form1 form, Action<MediaProgress> update) { this.form = form; this.update = update; }
+            public void Report(MediaProgress p) {
+                if (clock.ElapsedMilliseconds - last < 100) return;
+                last = clock.ElapsedMilliseconds;
+                if (form.IsDisposed || form.Disposing || !form.IsHandleCreated) return;
+                try { form.Invoke((MethodInvoker)(() => { if (!form.IsDisposed && !form.Disposing) update(p); })); }
+                catch (InvalidOperationException) { if (!form.IsDisposed && !form.Disposing) throw; }
             }
-            theform.my.mkdir(sp);
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                FileName = ffmpegBin,
-                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vf \"fps=30\" -f image2 -nostats -progress pipe:1 \"{workPath}\\source\\%08d.png\" ",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            theform.setProgressTitle("影像轉成 png : " + totalsFrame.ToString());
-
-            return await Task.Run(async () =>
-            {
-                string logFile = Path.Combine(Path.GetDirectoryName(workPath), Path.GetFileName(workPath) + "_step2_ffmpeg.log");
-                FfmpegProgressState progressState = new FfmpegProgressState();
-                object progressLock = new object();
-                Task<ProcessRunResult> processTask = ProcessRunner.RunAsync(startInfo, cancellationToken, 0, logFile, delegate (string line)
-                {
-                    lock (progressLock)
-                    {
-                        FfmpegProgressParser.TryApplyLine(progressState, line);
-                    }
-                });
-                // 進度顯示改讀 ffmpeg -progress 的 frame；完成判斷交給 process exit code，避免 ffmpeg 尚未收尾就提前成功。
-                Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 影片轉 png", "開始時間")));
-                try
-                {
-                    while (!processTask.IsCompleted)
-                    {
-                        long nowFrames = 0;
-                        lock (progressLock)
-                        {
-                            nowFrames = progressState.Frame;
-                        }
-                        double p = ProgressStep2Start;
-                        if (totalsFrame > 0)
-                        {
-                            p = theform.my.arduino_map(nowFrames, 0, totalsFrame, ProgressStep2Start, ProgressStep2End);
-                            p = (p >= ProgressStep2End) ? ProgressStep2End : p;
-                        }
-                        long showFrames = nowFrames;
-                        theform.Invoke((MethodInvoker)(() =>
-                        {
-                            if (totalsFrame > 0 && showFrames >= totalsFrame)
-                            {
-                                showFrames = totalsFrame;
-                            }
-                            theform.setProgressTitle("影像轉成 png: " + showFrames.ToString() + " / " + totalsFrame.ToString());
-                            theform.setProgress(p);
-                        }));
-                        Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
-                        Int64 duration = et - st;
-                        theform.my.grid_updateRow(theform.logDataGridView, "將 影片轉 png", "經過時間", duration + " 秒");
-                        await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                }
-
-                ProcessRunResult result = await processTask.ConfigureAwait(false);
-                long outputPngs = 0;
-                try
-                {
-                    outputPngs = Convert.ToInt64(theform.my.glob(Path.Combine(workPath, "source"), "*.png").Count());
-                }
-                catch { }
-                if (result.Cancelled)
-                {
-                    return false;
-                }
-                if (!result.Success || outputPngs <= 0)
-                {
-                    string summary = result.GetErrorSummary(1200);
-                    theform.Invoke((MethodInvoker)(() =>
-                    {
-                        MessageBox.Show("影像轉成 PNG 失敗...\r\nExitCode: " + result.ExitCode.ToString() + "\r\nLog: " + logFile + "\r\n" + summary, "異常", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }));
-                    return false;
-                }
-                theform.Invoke((MethodInvoker)(() =>
-                {
-                    theform.setProgress(ProgressStep2End);
-                    theform.setProgressTitle("影像轉成 png: " + outputPngs.ToString() + " / " + totalsFrame.ToString());
-                }));
-                theform.my.unlink(logFile);
-                return true;
+        }
+        public async Task<bool> step2_sourceFile_to_png(string workPath, string sourceFile, CancellationToken cancellationToken)
+        {
+            frames = null; audio = null; mediaInfo = null;
+            theform.setProgressTitle("讀取影片並拆成 PNG...");
+            var progress = new StageProgress(theform, p => {
+                double total = mediaInfo?.Duration?.TotalSeconds * 30 ?? 0;
+                theform.setProgressTitle("影像轉成 PNG: " + p.Completed);
+                theform.setProgress(total > 0 ? Math.Min(ProgressStep2End, p.Completed / total * ProgressStep2End) : ProgressStep2Start);
+            });
+            bool ok = await RunNativeStage(() => {
+                mediaInfo = Backend.Probe(sourceFile, cancellationToken);
+                frames = Backend.ExtractFrames(sourceFile, Path.Combine(workPath, "source"), progress, cancellationToken);
             }, cancellationToken);
+            if (ok) { theform.setProgress(ProgressStep2End); theform.setProgressTitle("拆幀完成: " + frames.Count); }
+            return ok;
         }
         public async Task<bool> step3_sourceFile_to_wav(string workPath, string sourceFile, string targetFile, CancellationToken cancellationToken)
         {
-            string ffmpegBin = Path.Combine(theform.PWD, "binary", "ffmpeg.exe");
-            if (!theform.my.is_file(ffmpegBin))
-            {
-                MessageBox.Show("轉檔工具 " + ffmpegBin + " 不存在...", "異常", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("影片分離聲音...");
-            }));
-
-            string soundkind = theform.comboBox_soundKind.Text.Trim();
-            Console.WriteLine("soundkind: " + soundkind);
-            string audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
-            string sound_param = "";
-            switch (soundkind.ToUpper())
-            {
-                case "AAC":
-                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
-                    sound_param = "-c:a aac -b:a 192k";
-                    break;
-                case "LIBMP3LAME":
-                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
-                    sound_param = "-c:a libmp3lame -q:a 4";
-                    break;
-                case "OGG":
-                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".ogg");
-                    sound_param = "-c:a libvorbis -q:a 4";
-                    break;
-                default:
-                    // 原音
-                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
-                    break;
-            }
-
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                FileName = ffmpegBin,
-                Arguments = $" -hwaccel auto -y -i \"{sourceFile}\" -vn {sound_param} \"{audioFile}\"",
-                RedirectStandardOutput = false,
-                RedirectStandardError = false,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("開始將影片分離聲音...");
-            }));
-            return await Task.Run(() =>
-            {
-                bool isCancel = false;
-                using (Process process = Process.Start(startInfo))
-                {
-                    try
-                    {
-                        Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 影片分離聲音", "開始時間")));
-                        // 獲取進度
-                        //記錄檔案最後的變化，如果連 30 秒都沒變，也中斷
-                        Int64 last_change_datetime = theform.my.time64();
-                        Int64 last_file_size = 0;
-                        while (!process.HasExited)
-                        {
-                            if (cancellationToken.IsCancellationRequested)
-                            {
-                                for (int i = 0; i < 5; i++)
-                                {
-                                    try
-                                    {
-                                        process.Kill(); // 終止 ffmpeg 進程
-                                        process.Dispose();
-                                    }
-                                    catch
-                                    {
-                                    }
-                                }
-
-                                isCancel = true;
-                                cancellationToken.ThrowIfCancellationRequested();
-                                break;
-
-                            }
-                            Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
-                            Int64 duration = et - st;
-                            theform.my.grid_updateRow(theform.logDataGridView, "將 影片分離聲音", "經過時間", duration + " 秒");
-
-                            if (theform.my.is_file(audioFile))
-                            {
-                                Int64 fSize = theform.my.filesize(audioFile);
-                                if (fSize != last_file_size)
-                                {
-                                    last_file_size = fSize;
-                                    last_change_datetime = theform.my.time64();
-                                }
-                                if (fSize == last_file_size && theform.my.time64() - last_change_datetime > 30)
-                                {
-                                    break;
-                                }
-                            }
-
-                            Task.Delay(1000).Wait(); // 非阻塞的延遲
-                        }
-
-                        //if (File.Exists(progressFilePath))
-                        {
-                            //string progressText = File.ReadAllText(progressFilePath);
-                            //Console.WriteLine("PPPPPPPPPPPPPPPPPPPPPPPPP Done:");
-                            //Console.WriteLine(progressText);
-                            theform.Invoke((MethodInvoker)(() =>
-                            {
-                                theform.setProgress(ProgressStep3End);
-                                theform.setProgressTitle("影片分離出聲音完成");
-                            }));
-                        }
-                        //string error = process.StandardError.ReadToEnd();
-                        //Console.WriteLine("Error: " + error);
-                        if (isCancel)
-                        {
-                            return false;
-                        }
-                    }
-                    catch
-                    {
-                        return false;
-                    }
-                }
-                if (isCancel)
-                {
-                    return false;
-                }
-                return true;
-            }, cancellationToken);
+            string kind = theform.comboBox_soundKind.Text.Trim().ToUpperInvariant();
+            AudioMode mode = kind == "AAC" ? AudioMode.Aac : kind == "LIBMP3LAME" ? AudioMode.Mp3 : kind == "OGG" ? AudioMode.Vorbis : AudioMode.PcmWav;
+            theform.setProgressTitle("影片分離聲音...");
+            bool ok = await RunNativeStage(() => audio = Backend.ExtractAudio(sourceFile, Path.Combine(workPath, Path.GetFileNameWithoutExtension(targetFile)), mode, null, cancellationToken), cancellationToken);
+            if (ok) { theform.setProgress(ProgressStep3End); theform.setProgressTitle("影片分離聲音完成"); }
+            return ok;
         }
         public async Task<bool> step4_sourcePng_to_aiPng(string workPath, CancellationToken cancellationToken)
         {
-            string aiRNVBin = Path.Combine(theform.PWD, "binary", "realesrgan-ncnn-vulkan-v0.2.0-windows", "realesrgan-ncnn-vulkan.exe");
-            if (!theform.my.is_file(aiRNVBin))
-            {
-                MessageBox.Show("AI 轉檔工具 " + aiRNVBin + " 不存在...", "異常", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
-
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("原影像圖片轉成高解析度圖片...");
-            }));
-
-            string sourcePath = Path.Combine(workPath, "source");
-            string targetPath = Path.Combine(workPath, "target");
-            string imageScale = Convert.ToInt32(theform.my.explode("x ", theform.comboBox_ImageScale.Text.Trim())[1]).ToString();
-            if (imageScale == "1")
-            {
-                return await copySourcePngsWithoutUpscale(sourcePath, targetPath, cancellationToken);
-            }
-
-            // 計算總圖片數量
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("計算有多少圖片需處理...");
-            }));
-
-
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("計算刪除重複影像後數量...");
-            }));
-            //2024-08-04 找出重複的圖片，我希望只處理一次
-            var sourcePngs = theform.my.glob(sourcePath, "*.png");
-            Dictionary<string, List<string>> fileHash = new Dictionary<string, List<string>>();
-
-            //原始檔名，只記 BN
-            //只記與他相同的檔案名稱
-            var sourcePngsLists = new Dictionary<string, string>();
-            int step = 0;
-            int total = sourcePngs.Count();
-            foreach (string png in sourcePngs)
-            {
-                string hash = theform.my.sha256_file(png);
-                string bn = theform.my.basename(png);
-                if (!fileHash.ContainsKey(hash))
-                {
-                    fileHash[hash] = new List<string>();
-                    fileHash[hash].Add(bn);
-                    sourcePngsLists[bn] = bn;
-                }
-                else
-                {
-                    fileHash[hash].Add(bn);
-                    sourcePngsLists[bn] = fileHash[hash][0];
-                    //刪除這張
-                    theform.my.unlink(png);
-                }
-                if (step % 10 == 0)
-                {
-                    theform.Invoke((MethodInvoker)(() =>
-                    {
-                        theform.setProgressTitle("計算刪除重複影像後數量..." + step.ToString() + " / " + total.ToString());
-                        theform.setProgress(total == 0 ? ProgressStep4PrepareEnd : theform.my.arduino_map(step, 0, total, ProgressStep3End, ProgressStep4PrepareEnd));
-                    }));
-                }
-                step++;
-            }
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("計算刪除重複影像後數量..." + theform.my.glob(sourcePath, "*.png").Count().ToString());
-            }));
-
-            if (theform.my.is_dir(targetPath))
-            {
-                theform.my.deltree(targetPath);
-            }
-            theform.my.mkdir(targetPath);
-            await Task.Delay(1000); // 使用非阻塞的延遲
-
-            long totalsPngs = theform.my.glob(sourcePath, "*.png").Count();
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("計算有多少圖片需處理..." + totalsPngs.ToString());
-            }));
-
-
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                FileName = aiRNVBin,
-                Arguments = $" -i \"{sourcePath}\" -o \"{targetPath}\" -s " + imageScale + " -f png",
-                RedirectStandardOutput = false,
-                RedirectStandardError = false,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("高解析度影像轉檔...");
-            }));
-
-            return await Task.Run(() =>
-            {
-                bool isCancel = false;
-                Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 原影像 png 用 ai 轉成高解析度", "開始時間")));
-                using (Process process = new Process())
-                {
-                    process.StartInfo = startInfo;
-                    /*
-                    process.OutputDataReceived += (sender, e) =>
-                    {
-                        if (!string.IsNullOrEmpty(e.Data))
-                        {
-                            Console.WriteLine($"Output: {e.Data}");
-                        }
-                    };
-                    process.ErrorDataReceived += (sender, e) =>
-                    {
-                        if (!string.IsNullOrEmpty(e.Data))
-                        {
-                            Console.WriteLine($"Error: {e.Data}");
-                        }
-                    };
-                    */
-
-                    try
-                    {
-                        process.Start();
-                        //process.BeginOutputReadLine();
-                        //process.BeginErrorReadLine();
-
-                        while (!process.HasExited)
-                        {
-                            if (cancellationToken.IsCancellationRequested)
-                            {
-                                for (int i = 0; i < 5; i++)
-                                {
-                                    try
-                                    {
-                                        process.Kill(); // 終止 ffmpeg 進程
-                                        process.Dispose();
-                                    }
-                                    catch
-                                    {
-                                    }
-                                }
-                                isCancel = true;
-                                cancellationToken.ThrowIfCancellationRequested();
-                                break;
-                            }
-
-                            long nowPngs = theform.my.glob(targetPath, "*.png").Count();
-
-                            theform.Invoke((MethodInvoker)(() =>
-                            {
-                                theform.setProgressTitle($"高解析度影像轉檔... {nowPngs} / {totalsPngs}");
-                                double percentComplete = (double)nowPngs / totalsPngs * ProgressAllDone;
-                                double showPercent = theform.my.arduino_map(percentComplete, 0, ProgressAllDone, ProgressStep4PrepareEnd, ProgressStep4End);
-                                theform.setProgress(showPercent);
-                            }));
-                            Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
-                            Int64 duration = et - st;
-                            theform.my.grid_updateRow(theform.logDataGridView, "將 原影像 png 用 ai 轉成高解析度", "經過時間", duration + " 秒");
-                            Task.Delay(1000).Wait(); // 非阻塞的延遲
-                        }
-                        /*
-                        string error = process.StandardError.ReadToEnd();
-                        if (!string.IsNullOrEmpty(error))
-                        {
-                            Console.WriteLine($"Error: {error}");
-                        }
-                        */
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Exception 436: {ex.Message}");
-                        isCancel = true;
-                        return false;
-                    }
-                }
-                if (isCancel)
-                {
-                    return false;
-                }
-
-                //2024-08-04 針對 sourcePngsLists 補上相同的圖片
-                var fp_target = theform.my.glob(targetPath, "*.png");
-                var bn_target = new Dictionary<string, string>();
-                foreach (var p in fp_target)
-                {
-                    bn_target[theform.my.basename(p)] = "";
-                }
-                foreach (var p in sourcePngsLists)
-                {
-                    if (!bn_target.ContainsKey(p.Key))
-                    {
-                        theform.my.copy(Path.Combine(targetPath, p.Value), Path.Combine(targetPath, p.Key));
-                    }
-                }
-                Int64 _et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
-                Int64 _duration = _et - st;
-                theform.my.grid_updateRow(theform.logDataGridView, "將 原影像 png 用 ai 轉成高解析度", "經過時間", _duration + " 秒");
-                Task.Delay(1000).Wait(); // 非阻塞的延遲
-
-                return true;
-            }, cancellationToken);
-        }
-        private async Task<bool> copySourcePngsWithoutUpscale(string sourcePath, string targetPath, CancellationToken cancellationToken)
-        {
-            return await Task.Run(() =>
-            {
-                try
-                {
-                    theform.Invoke((MethodInvoker)(() =>
-                    {
-                        theform.setProgressTitle("x1 不放大，複製原始圖片...");
-                    }));
-
-                    if (theform.my.is_dir(targetPath))
-                    {
-                        theform.my.deltree(targetPath);
-                    }
-                    theform.my.mkdir(targetPath);
-
-                    string[] sourcePngs = theform.my.natsort(theform.my.glob(sourcePath, "*.png"));
-                    int total = sourcePngs.Count();
-                    if (total <= 0)
-                    {
-                        theform.Invoke((MethodInvoker)(() =>
-                        {
-                            MessageBox.Show("找不到可複製的來源 PNG...", "異常", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }));
-                        return false;
-                    }
-
-                    for (int i = 0; i < total; i++)
-                    {
-                        if (cancellationToken.IsCancellationRequested)
-                        {
-                            return false;
-                        }
-                        string png = sourcePngs[i];
-                        string targetFile = Path.Combine(targetPath, theform.my.basename(png));
-                        theform.my.copy(png, targetFile);
-                        if (i % 10 == 0 || i == total - 1)
-                        {
-                            int done = i + 1;
-                            double p = theform.my.arduino_map(done, 0, total, ProgressStep3End, ProgressStep4End);
-                            theform.Invoke((MethodInvoker)(() =>
-                            {
-                                theform.setProgressTitle("x1 不放大，複製原始圖片... " + done.ToString() + " / " + total.ToString());
-                                theform.setProgress(p);
-                            }));
-                        }
-                    }
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    theform.Invoke((MethodInvoker)(() =>
-                    {
-                        MessageBox.Show("x1 複製原始圖片失敗...\r\n" + ex.Message, "異常", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }));
-                    return false;
-                }
-            }, cancellationToken);
+            int scale = Convert.ToInt32(theform.my.explode("x ", theform.comboBox_ImageScale.Text.Trim())[1]);
+            var progress = new StageProgress(theform, p => {
+                double fraction = p.Total > 0 ? (double)p.Completed / p.Total.Value : 0;
+                double start = p.Stage == "hash" || p.Stage == "copy" ? ProgressStep3End : ProgressStep4PrepareEnd;
+                double end = p.Stage == "hash" ? ProgressStep4PrepareEnd : ProgressStep4End;
+                theform.setProgress(start + Math.Min(1, fraction) * (end - start));
+                theform.setProgressTitle(p.Stage == "hash" ? "比對重複影格..." : scale == 1 ? "複製原始圖片..." : "AI 放大影格...");
+            });
+            bool ok = await RunNativeStage(() => frames = PngFrameUpscaler.Run(frames, Path.Combine(workPath, "target"), scale,
+                BinaryPath("native", "realesrgan"), BinaryPath("realesrgan-ncnn-vulkan-v0.2.0-windows", "models"), progress, cancellationToken), cancellationToken);
+            if (ok) { theform.setProgress(ProgressStep4End); theform.setProgressTitle("影格處理完成: " + frames.Count); }
+            return ok;
         }
         public async Task<bool> step5_aiPng_to_mp4(string workPath, string targetFile, CancellationToken cancellationToken)
         {

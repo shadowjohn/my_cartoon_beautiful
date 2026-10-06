@@ -69,6 +69,7 @@
     <Compile Include="App_Code\ffmpeg_input.cs" />
     <Compile Include="App_Code\ffmpeg_audio_transcoder.cs" />
     <Compile Include="App_Code\realesrgan_upscaler.cs" />
+    <Compile Include="App_Code\png_frame_upscaler.cs" />
     <Compile Include="App_Code\realesrgan_native.cs" />
     <Compile Include="App_Code\ffmpeg_video_decoder.cs" />
     <Compile Include="App_Code\ffmpeg_progress.cs" />
