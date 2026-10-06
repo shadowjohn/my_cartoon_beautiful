@@ -36,7 +36,7 @@ MAE0.0884-0.0949 and maximum4/255; tests retain a bounded legacy comparison
 (max4, MAE0.12) plus exact rebuilt-core comparison, with magnified diff images.
 
 Lifecycle acceptance: retain ncnn's process-wide Vulkan instance/device across jobs,
-using its existing instance holder for DLL shutdown. Each job still destroys its
+with explicit rs_shutdown before host exit (the upstream holder is then a no-op). Each job still destroys its
 model/session, and concurrent sessions remain rejected. A raw Vulkan-only probe
 on the local installed loader/ICD/layer stack reproduced +5 kernel handles per
 VkDevice create/destroy, without ncnn or inference. Reusing the intended runtime

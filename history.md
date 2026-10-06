@@ -186,3 +186,13 @@ P2：
 - GitHub Actions已更新native build／CPU smoke／乾淨package驗證；runner沒有系統Vulkan loader時ABI明列NOT-RUN。尚未push，未取得遠端CI執行證據。
 - WMI process-start事件訂閱被本機拒絕存取；未提權，因此沒有事件級「零子程序」證據。已查核app/include六個原callsite消失，發佈包沒有兩支exe，並實際執行DLL流程。
 - 真人按鈕操作／其他GPU與高解析度長片仍未驗證；本輪不發布。公開散布前須另外組裝固定FFmpeg與其外部相依完整對應source bundle；目前授權全文與固定來源／建置資訊已隨本機包提供。
+
+### Task 9 最終本機驗收與獨立審查
+
+- 最終runtime同程序重跑五次短片＋10分鐘片全部PASS／exit0，總234.345秒；長片205.412秒、18,000幀、去重2張（低解析度fixture，不能當4K長時間GPU負載驗收）。五短片idle handles均657，長片後648，沒有逐job增長。
+- 最終private peak509.94MiB、五短片idle約401–411MiB，長片後394.39MiB；GPU dedicated peak225.53MiB、shared180.20MiB、committed405.79MiB。程序級runtime idle約106.03MiB dedicated，約208MiB committed保持平臺；這是刻意保留的device/cache，不宣稱每job GPU歸零。226次samples有224次GPU有效，缺值沒有當零。
+- 六個成品另用舊CLI獨立CPU decode至EOF，影音皆可解碼，五短片各60幀／2秒，長片18,000幀／600秒，無decode錯誤。CLI僅屬測試工具，產品包仍不含CLI。
+- 完整managed smoke（runtime/ABI rollback/decode/audio/upscale/pipeline/mux/lifecycle）exit0、native CTest2/2 exit0、乾淨包x1/x2（含真實產品step1–step6及WinForms進度）exit0；UtilityTests、ProcessRunnerTests PASS。Release managed build0warnings/errors；UtilityTests既有CS8981保留。
+- 新鮮獨立reviewer只讀審查a3f1528..903c170，未發現Critical／Important問題；未再啟動review迴圈。實作位於codex/native-media-dll；原checkout的history/docs dirty狀態完整保留，未合併、push或發布。
+- 完整raw證據位於ignored artifacts/acceptance/endurance-monitor-20261006-131620-abc7b189（含DLLhash、log、CSV、獨立decode結果）；本機測試包位於artifacts/release/my_cartoon_beautiful_native-dev。
+- 已知驗證邊界：真人操作、不同GPU／高解析度長片、遠端CI、WMI事件級子程序追蹤，以及公開發布用完整對應source bundle仍未取得；Phase B舊程式改良留待Phase A實際試用後。

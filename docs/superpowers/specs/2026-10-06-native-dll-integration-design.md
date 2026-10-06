@@ -104,3 +104,12 @@ app.cs 保留流程協調；新增專注於上述操作的 managed adapter。進
 - Real-ESRGAN MIT：https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan/blob/master/LICENSE
 - ncnn pinned license：https://github.com/Tencent/ncnn/blob/6125c9f47cd14b589de0521350668cf9d3d37e3c/LICENSE.txt
 - .NET Standard 相容性建議：https://learn.microsoft.com/en-us/dotnet/standard/net-standard
+
+## 實作驗證後的生命週期補充（2026-10-06）
+
+- 實測 raw Vulkan VkDevice create/destroy 在本機 loader/ICD/layer 每次保留5個 kernel handles，因此 ncnn Vulkan instance/device 採程序級重用；模型/session、job資料與閒置allocator pools仍在每次工作結束後釋放。x1依然完全不啟動GPU runtime。
+- C ABI1追加 rs_shutdown()：所有session與worker結束後才可執行，活躍時回-5。產品Main finally／native test／隔離AppDomain probe必須在exit或unload前呼叫，避免上游global destructor ordering。native五次推論後handle405→405。
+- glslang固定版的InitGlobalLock曾每次建立未關閉mutex，採可重用程序級recursive lock並以source SHA patch記錄；小型lock維持至程序結束，避免跨translation-unit解構順序。
+- FFmpeg YUV420P要求偶數寬高；小於11x11的AI輸入明確拒絕。BGRA alpha採ncnn CPU bicubic，避免已在舊CLI重現的GPU alpha device-lost；RGB模型與shader算術維持上游。
+- 未修改上游core配相同工具鏈與DLL逐像素相等；舊v0.2binary最大差4/255，保留有界比較與差異圖，不能描述為舊binary逐像素一致。
+- 本機可執行測試包與公開散布分開：包內提供授權全文／版本hash／來源與建置資訊；公開發佈前還需要組裝FFmpeg及其靜態相依完整對應source bundle。
