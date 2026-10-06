@@ -13,7 +13,7 @@ function Assert-Hash([string]$File,[string]$Expected){
 if(!$VerifyOnly){
     $cache=Join-Path $repo 'artifacts/native-cache'
     New-Item -ItemType Directory -Force -Path $cache,$runtime | Out-Null
-    $archive=Join-Path $cache 'ffmpeg-9.0-lgpl-shared.zip'
+    $archive=Join-Path $cache ('ffmpeg-'+$manifest.ffmpeg.sha256+'.zip')
     if(!(Test-Path -LiteralPath $archive)){
         Invoke-WebRequest -Uri $manifest.ffmpeg.url -OutFile ($archive+'.partial')
         Assert-Hash ($archive+'.partial') $manifest.ffmpeg.sha256

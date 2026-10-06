@@ -1,0 +1,6 @@
+# Keep Docker/Linux build scripts runnable after a Windows checkout.
+tools/ffmpeg/*.sh text eol=lf
+# Preserve upstream attribution bytes, including existing line endings.
+native/licenses/FFmpeg-dependencies/** -text -whitespace
+native/licenses/System-MIT-Packages-THIRD-PARTY-NOTICES.txt -text -whitespace
+native/licenses/System.Resources.Extensions-THIRD-PARTY-NOTICES.txt -text -whitespace

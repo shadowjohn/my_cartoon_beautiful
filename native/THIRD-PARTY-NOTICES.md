@@ -1,13 +1,13 @@
 # Native media dependencies
 
 - FFmpeg.AutoGen 9.0.1.1: MIT; https://github.com/Ruslan-B/FFmpeg.AutoGen/tree/v9.0.1.1
-- FFmpeg shared build: LGPLv3 (--enable-version3, no --enable-gpl/nonfree); exact archive and DLL hashes in dependencies.lock.json. Native configuration/license strings are recorded by the smoke harness; this does not change FFmpeg licensing.
+- FFmpeg shared build: locally rebuilt LGPLv3 (--enable-version3, --disable-gpl, --disable-nonfree). Chromaprint/FFTW and optional GPL LittleCMS plugins are removed before linking; LGPL core libraries and permissive dependencies remain. Exact archive/DLL hashes and dependency image digest are in dependencies.lock.json. Exported configuration/license strings alone do not establish the licenses of transitive dependencies; the source and linker records are supplied too.
 - FFmpeg source: https://github.com/FFmpeg/FFmpeg/tree/2a571b606854520cf89804d8030c8b328e621689
-- Build recipes/patches and dependency revisions: https://github.com/BtbN/FFmpeg-Builds/tree/6c9aec5fc9a72ec3abedd1fa84db141fa18cf52b
+- Build recipes/patches and dependency revisions: https://github.com/BtbN/FFmpeg-Builds/tree/9acad4a9ef1583096af7836cc1e9c8cbcb4d3950
 - Real-ESRGAN-ncnn-vulkan: MIT, Xintao Wang and nihui; preserve both notices from upstream LICENSE.
 - ncnn: BSD-3-Clause and bundled dependency notices, pinned at 6125c9f47cd14b589de0521350668cf9d3d37e3c.
 
-Release packaging must include applicable license texts and corresponding source/build information. Local smoke success does not certify a public distribution; no release has been published by this work.
+Applicable license texts are included in the binary package. The v0.05 Release provides corresponding source archives, dependency sources and build information alongside the binaries: https://github.com/shadowjohn/my_cartoon_beautiful/releases/tag/v0.05 . SHA256SUMS.txt identifies and verifies the release assets.
 
 ## Real-ESRGAN bridge build
 
@@ -15,8 +15,8 @@ Real-ESRGAN source and modified core are under `realesrgan_bridge/upstream` (MIT
 
 ## Managed/runtime notices
 
-System.Resources.Extensions 4.7.1, System.Memory 4.5.4, System.Buffers 4.5.1, System.Numerics.Vectors 4.5.0 and System.Runtime.CompilerServices.Unsafe 4.5.3 are Microsoft MIT packages; license text is included. FFmpeg.AutoGen is MIT. FFmpeg includes software developed by the Independent JPEG Group; this project does not modify its JPEG implementation.
+System.Resources.Extensions 4.7.1, System.Memory 4.5.4, System.Buffers 4.5.1, System.Numerics.Vectors 4.5.0 and System.Runtime.CompilerServices.Unsafe 4.5.3 are Microsoft MIT packages; their shared license text is included. System.Resources.Extensions-THIRD-PARTY-NOTICES.txt covers Resources.Extensions; System-MIT-Packages-THIRD-PARTY-NOTICES.txt is the identical notice supplied with the other four packages. FFmpeg.AutoGen is MIT. FFmpeg includes software developed by the Independent JPEG Group; this project does not modify its JPEG implementation.
 
-The pinned shared build reports LGPL version 3 or later. Full LGPLv3 and GPLv3 texts, upstream LICENSE.md and exact runtime configuration are included. The application dynamically links replaceable DLLs; no restrictions on debugging modifications to LGPL libraries are imposed.
+FFmpeg dependency notices are preserved under `licenses/FFmpeg-dependencies/`; GCC runtime components use GPLv3 with the GCC Runtime Library Exception. The exception permits eligible compiled programs to use those runtime components under their own terms. The pinned shared build reports LGPL version 3 or later. Full LGPLv3 and GPLv3 texts, upstream LICENSE.md and exact runtime configuration are included. The application dynamically links replaceable DLLs; no restrictions on debugging modifications to LGPL libraries are imposed.
 
-This local staging bundle is not a published release. Before public binary distribution, assemble and provide the corresponding FFmpeg sources, BtbN patches/build scripts, and the sources/notices of its linked external libraries at the pinned revisions. The links above are provenance, not a claim that this complete source bundle has been assembled.
+The v0.05 source assets include the exact FFmpeg revision, pinned BtbN recipes and patches, the exact dependency source archives selected for the pinned dependency image, additional locked Rust crate sources, and the local removal/build scripts. See SOURCES.md in the same Release for asset mapping, provenance, extraction and rebuild instructions. The application/native companion my_cartoon_beautiful_v0.05-source.zip contains the tagged application and bridge source, pinned ncnn/glslang/Vulkan inputs, patches and licenses. Build verification does not imply bit-identical output across different compiler or operating-system versions.

@@ -215,6 +215,8 @@ handle 只允許一個 process 呼叫；取消狀態對該 session sticky，取�
 
 ## 已定位候選（未下載／未執行，Task 1 通過後才正式鎖定）
 
+> 2026-10-06 發布前修正：下列為歷史候選。實際 avformat DLL 含 Chromaprint 引入的 GPL FFTW，已停止採用該 binary；v0.05 改由相同 FFmpeg source 重編，移除這條相依與 LittleCMS 可選 GPL plugins。現行 archive／DLL hashes、image digest 請以 `native/dependencies.lock.json` 為準，建置方式見 `tools/ffmpeg/README.md`。
+
 - Binding：FFmpeg.AutoGen 9.0.1.1（netstandard2.0）。
 - Native release：BtbN FFmpeg-Builds tag autobuild-2026-09-30-13-08。
 - Asset：ffmpeg-n9.0.2-17-g2a571b6068-win64-lgpl-shared-9.0.zip；asset ID 600950900；size 76972461 bytes。

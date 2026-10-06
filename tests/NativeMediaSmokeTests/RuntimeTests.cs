@@ -7,6 +7,8 @@ internal static unsafe class RuntimeTests
     {
         foreach(string name in new[]{"png","aac","libmp3lame","libvorbis","pcm_s16le","libopenh264"})
             if(ffmpeg.avcodec_find_encoder_by_name(name)==null) throw new Exception("Missing encoder " + name);
+        foreach(string name in new[]{"h264","hevc","aac"})
+            if(ffmpeg.avcodec_find_decoder_by_name(name)==null) throw new Exception("Missing native decoder " + name);
         AVCodecContext* encoder=null; AVCodecContext* decoder=null;
         AVFrame* input=null; AVFrame* output=null; AVPacket* packet=null;
         try

@@ -4,41 +4,44 @@
   "ffmpeg": {
     "binding": "FFmpeg.AutoGen",
     "bindingVersion": "9.0.1.1",
-    "release": "autobuild-2026-09-30-13-08",
-    "url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-09-30-13-08/ffmpeg-n9.0.2-17-g2a571b6068-win64-lgpl-shared-9.0.zip",
-    "sha256": "7157177b8a6cb2174c1650ba8c71b363f2c78cba5330f88c4c02cf5b2b880646",
+    "release": "v0.05",
+    "url": "https://github.com/shadowjohn/my_cartoon_beautiful/releases/download/v0.05/ffmpeg-n9.0.2-17-g2a571b6068-win64-lgpl-shared-no-gpl-deps-v1.zip",
+    "sha256": "10c74804c7dcb42cbc827685d9b0ef19cc5ebf7a5e7a92ab1ea908cbc6218223",
     "revision": "2a571b606854520cf89804d8030c8b328e621689",
-    "buildRevision": "6c9aec5fc9a72ec3abedd1fa84db141fa18cf52b",
+    "buildRevision": "9acad4a9ef1583096af7836cc1e9c8cbcb4d3950",
     "dlls": [
       {
         "name": "avcodec-63.dll",
-        "sha256": "525060f60b3d0171bb9e0ea4b2074a2ff07f5d96b2483a82d9e08fe2ece58e9c"
+        "sha256": "a4961a8fcfc8ee3550d3af765166e9b7dee8468f84471e5dd96f61c05df680b6"
       },
       {
         "name": "avdevice-63.dll",
-        "sha256": "e9e4306ac36778f2faceb1b3ee42152e9b16f10227d2315ae42d282d77c9105c"
+        "sha256": "e3f401081fa2b1330888608529ace8544af263a4134f90d73bfa5723fdf38252"
       },
       {
         "name": "avfilter-12.dll",
-        "sha256": "df6f94c43a04be9f3cedcf94b9c5085ae4186339b6828271d42055723eccc060"
+        "sha256": "0a53d7ac5572431436c3a9c496f6fefbe478cb94c4743264201e3f557557e98d"
       },
       {
         "name": "avformat-63.dll",
-        "sha256": "7275053ebb1dfa708d45d8544ad94bf664e0cb534cd0f2ed979fdf024bc190b3"
+        "sha256": "9ea9300951bba04794ea792d46fd8f65c728ec903763b86ed73a674ff2b6e550"
       },
       {
         "name": "avutil-61.dll",
-        "sha256": "a34c7ef846a2d353c1a6a266b22a001ccd42f6654ab92631a7196e961bdedffd"
+        "sha256": "cc835201000cb7626e30259751aaf04509bce41d9b6f927b8f3514f25f8277b6"
       },
       {
         "name": "swresample-7.dll",
-        "sha256": "1fbcea031ada11a15e609e209e1cd71a9c632f39bc4794190137b67351db677f"
+        "sha256": "7f0695ca188a4a4d302ba863e1b9cf6425ba714b0322ed3815e97eac57e4f0a0"
       },
       {
         "name": "swscale-10.dll",
-        "sha256": "9ff8d80bc228f0e557553fd5cfcefc67b682098e9bd6ab08dc7a7d2dc8ad4699"
+        "sha256": "5fb4f0385371a595329ea0e261dfdee42677ef369b14fcf9d34392c92b62d6b3"
       }
-    ]
+    ],
+    "dependencyImage": "ghcr.io/btbn/ffmpeg-builds/win64-lgpl-shared-9.0@sha256:e0b0c4e3ff1dc7f5529b6174398c212dfa1358ec9f9a802e22e5cacba872032b",
+    "rebuildScript": "tools/ffmpeg/rebuild.ps1",
+    "sourceRelease": "https://github.com/shadowjohn/my_cartoon_beautiful/releases/tag/v0.05"
   },
   "realesrgan": {
     "revision": "37026f49824c5cf84062e7c6a5dd71445dcf610f",

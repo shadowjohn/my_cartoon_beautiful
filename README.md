@@ -23,7 +23,7 @@
 信箱：<a href="mailto:linainverseshadow@gmail.com">linainverseshadow@gmail.com</a>
 
 ## 版權
-完全免費的 MIT-License
+本專案程式碼採 MIT License；隨附的 FFmpeg、模型及其他第三方元件依各自授權，詳見 [第三方聲明](native/THIRD-PARTY-NOTICES.md)。
 
 ## 版本資訊
 - 最初開發日期：2024-07-28
@@ -31,7 +31,7 @@
 - 版本：v0.05（Windows x64）
 
 ## 下載位置
-- v0.05：本機版本已完成；公開下載包尚未上傳。可依下方步驟建置，產物位於 `artifacts/release/my_cartoon_beautiful_v0.05.zip`。
+- **v0.05 Windows x64**：[主程式 ZIP](https://github.com/shadowjohn/my_cartoon_beautiful/releases/download/v0.05/my_cartoon_beautiful_v0.05.zip) · [SHA-256](https://github.com/shadowjohn/my_cartoon_beautiful/releases/download/v0.05/my_cartoon_beautiful_v0.05.zip.sha256) · [Release 與完整對應原始碼](https://github.com/shadowjohn/my_cartoon_beautiful/releases/tag/v0.05)。解壓縮後執行 `my_cartoon_beautiful.exe`，需 Windows x64 與 .NET Framework 4.7.2 或更新的 4.x runtime。
 - 主程式(V0.04 beta版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.04/my_cartoon_beautiful.zip)
 - 主程式(V0.03 穩定版)：[下載連結](https://raw.githubusercontent.com/shadowjohn/my_cartoon_beautiful/master/release/V0.03/my_cartoon_beautiful.zip)
 
@@ -56,7 +56,9 @@ v0.05 採用 Windows x64 / .NET Framework 4.7.2。FFmpeg.AutoGen 9.0.1.1 呼叫�
 
 x1 不需要 AI DLL／模型／Vulkan GPU；x2–x4 需要支援 Vulkan 的顯卡與既有 animevideov3 模型。H.264 會先實際初始化 NVENC，失敗時回退 OpenH264。四種音訊保留 AAC／MP3／Vorbis／PCM 語意；沒有音軌會明確失敗。yuv420p 需要偶數輸出寬高，過小 AI 輸入（小於11x11）也會明確拒絕。
 
-套件與 DLL 版本、SHA-256、上游 revisions 見 [native/dependencies.lock.json](native/dependencies.lock.json)。本專案程式維持 MIT；FFmpeg 本次固定組合為 LGPLv3，其他元件依各自授權，見 [第三方聲明](native/THIRD-PARTY-NOTICES.md)。上方 V0.04／V0.03 下載連結保留為歷史版本。
+這個組合不含 `libx264`、`libx265`、`libfdk_aac`；H.264 編碼使用 NVENC／OpenH264，AAC 使用 FFmpeg 內建編碼器。仍保留 H.264、HEVC、AAC 原生解碼器，因此沒有 libx265 不代表無法讀取 HEVC 影片。libfdk_aac 是獨立授權，並非 GPL；本案未使用它。
+
+套件與 DLL 版本、SHA-256、上游 revisions 見 [native/dependencies.lock.json](native/dependencies.lock.json)。本專案程式維持 MIT；FFmpeg 使用自行重編的 LGPLv3 shared DLL，停用 Chromaprint／FFTW 並移除 LittleCMS 可選 GPL plugins，其他元件依各自授權，見 [第三方聲明](native/THIRD-PARTY-NOTICES.md)。上方 V0.04／V0.03 下載連結保留為歷史版本。
 
 ## 建置與本機驗證
 
@@ -83,7 +85,7 @@ GitHub 會在 push 至 `main` 或建立目標為 `main` 的 PR 時自動編譯�
 
 CI 建置 bridge 並跑 CPU decode/audio/x1 package smoke；若 runner 有系統 Vulkan loader 也跑 ABI，缺少時明列 NOT-RUN；GPU 對照、NVENC、長片與真人操作屬本機驗證，不能以 CI 代替。`--upscale` 的精確比較另需 legacy baseline 與 `tools/prepare_realesrgan_reference.ps1` 產生的相同工具鏈上游參考圖。`--endurance` 需 `create_smoke_fixtures.ps1 -IncludeEndurance`，記錄五次短片與一段十分鐘影片的同程序資源數值。
 
-v0.05 程式碼與標籤納入主線；下載包目前僅在本機產生。CI 保留建置與測試，暫不上傳二進位 artifact。公開散布前仍需準備固定 FFmpeg 組合及其靜態相依的完整對應原始碼／建置資料並隨發佈提供；固定來源連結不等於已組裝完成的 source bundle。
+v0.05 Release 同時提供主程式、FFmpeg DLL runtime、application/native 原始碼 companion、FFmpeg 與靜態相依來源、建置紀錄及 SHA-256。資產對應與重建方式見 Release 的 `SOURCES.md`；自行重編 FFmpeg 可依 [重建說明](tools/ffmpeg/README.md)。CI 保留建置與測試，Release 資產另行封裝與驗證，沒有自動公開二進位 artifact。
 
 ## 版本說明
 v0.05 版 (2026-10-06)：原生 DLL 整合

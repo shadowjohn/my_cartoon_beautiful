@@ -238,3 +238,30 @@ P2：
 - 手動入口實測完成：workflow_dispatch run 37423452118（https://github.com/shadowjohn/my_cartoon_beautiful/actions/runs/37423452118）在 785cc5b 上 success，build job 7m50s。native ABI 1/1、managed／CPU tests、isolated x1 產品流程及 Write build summary 全部 success。
 - 同提交的 push run 37423441204 已由 concurrency 自動取消，確認避免重複建置生效。完整 run.json／run.log／watch.log 保存在 ignored artifacts/acceptance/github-actions-37423452118；遠端 runner 的 GPU inference／NVENC 仍明列 NOT-RUN。
 - 本次收尾只追加驗收紀錄，以 [skip ci] 文件 commit 保存，避免重新建置相同產品與 workflow；實際通過遠端驗證的程式／workflow commit 為 785cc5b。
+
+## 2026-10-06 v0.05 公開發布前的相依授權修正
+
+- 使用者核准建立 v0.05 GitHub Release 並更新 README；已建立 draft，僅先放入原始碼 companion，尚未公開或上傳 FFmpeg runtime binary。
+- 實際查核發現原 BtbN LGPL shared DLL 含 GPL 的 FFTW：固定 chromaprint recipe 以 FFT_LIB=fftw3 建置，avformat-63.dll（SHA256 7275053ebb1dfa708d45d8544ad94bf664e0cb534cd0f2ed979fdf024bc190b3）內有 FFTW 3.3.11／codelet 字串。不能只依 avutil_license 的 LGPL 字串判斷整包授權；先前 LGPL-only 敘述因此需修正。
+- 證據位於 ignored artifacts/release-publication-v0.05/ffmpeg-license-audit；上游 Chromaprint README 明列 FFTW 會使其 binary 適用 GPL，FFTW 固定源碼標示 GPLv2-or-later。
+- 使用者選擇「維持 LGPL，重編不含 GPL 相依的 FFmpeg」。重編將停用未使用的 Chromaprint／FFTW，並移除 LCMS 可選 GPL plugin 的靜態庫與 pkg-config 引用，保留 MIT LCMS core；最後需檢查 link map／DLL，不能只檢查 configure flags。
+- 已向使用者說明 libx264／libx265 在 LGPL 組合停用；libfdk_aac 為獨立授權，並非 LGPL 必然排除，本案本來就未使用。現有 H.264 為 h264_nvenc／libopenh264，AAC 為內建 aac，並保留原生 H.264／HEVC／AAC 解碼；不因重編新增編碼器。
+- 原建置 image 已被上游清除，將以固定的新 image／recipe 配同一 FFmpeg source 重建，對應 source pins 與 runtime SHA 需同步更新；舊 runtime 不公開。
+- 來源快取下載／展開曾用盡 D: 可用空間；僅清理本輪重複下載分片後已恢復空間，後續大型來源與重編工作移至 C: managed worktree 的 ignored artifacts，保留所有專案與使用者資料。
+- 已補 Microsoft packages 隨附的兩份額外 THIRD-PARTY-NOTICES；完整來源、重編後 tests、最終 public Release／README 連結仍待完成。
+
+### 重編驗證與本機防毒提示
+
+- 重編採 FFmpeg 2a571b606854520cf89804d8030c8b328e621689、BtbN recipes 9acad4a9ef1583096af7836cc1e9c8cbcb4d3950 與 image digest e0b0c4e3ff1dc7f5529b6174398c212dfa1358ec9f9a802e22e5cacba872032b；固定 image 的上游 Actions 來源已對應確認。建置腳本保存完整 configure／link trace／DLL hashes，並以 .gitattributes 保持 Docker Bash 腳本 LF。
+- 使用者於重編驗證時收到 Trend Micro 對 ffmpeg.exe 的新程式／勒索行為攔截提示。已確認本輪曾從 managed worktree 的 artifacts/lgpl-ffmpeg-rebuild/bin 呼叫開發用 ffmpeg.exe -hide_banner -version 與 -encoders；隨後停止所有新 CLI 呼叫，沒有允許清單、繞過或調整防毒設定。此畫面不作為惡意或誤判定論。
+- 產品與後續驗收使用 DLL；開發編譯產出的 ffmpeg／ffprobe／ffplay EXE 不納入 runtime／產品 ZIP。CLI SHA256 8737b4bd2c22c1d801786545d6b977eb313f8b0dd91fec48e927c2c7a2c8010f 僅供本機事件對照，不是發佈資產。
+
+### LGPL 重編後的發佈驗證
+
+- 新 runtime archive SHA256 為 10c74804c7dcb42cbc827685d9b0ef19cc5ebf7a5e7a92ab1ea908cbc6218223；七個 DLL hashes 已更新 lock，下載快取改以 archive SHA 命名。ZIP 讀回確認 7 DLL／0 EXE，GitHub draft asset 的 size／digest 相符。
+- final link trace、DLL marker 與 libplacebo／libjxl／libjxl_cms 靜態庫符號查核均未見 FFTW／Chromaprint／LittleCMS GPL plugin；imports 僅 Windows 系統與七個 FFmpeg DLL。avutil／avcodec exports 回報 LGPLv3；不是只憑授權字串判斷相依。
+- 靜態相依授權通知 1,516 個檔案、8,893,098 bytes，來源／逐檔 SHA 已驗證並納入兩種 binary ZIP；以 Git attributes 保留第三方通知原始 bytes。對應來源已組裝為 FFmpeg core/build-records ZIP 加 80 個相依 archive ZIP，另含三個更新來源與 Rust crates；大型 archive 僅放 Release，不進 Git。
+- managed Release x64 與 NativeMediaSmokeTests build：0 warnings/errors。新 DLL smoke exit0：H.264／HEVC／AAC decoder presence、software H.264 roundtrip、decode、四種 audio、pipeline、mux x1–x4、NVENC fallback、取消／失敗保護及關窗等待均 PASS。
+- 五次短片與十分鐘低解析度影片全部完成；長片 18,000 幀、去重 2 張。五次短片 idle handles 為 652/652/652/652/654，長片後 643，未呈現逐 job 持續增加；這不是高解析度 GPU 壓力或所有平台無洩漏保證。詳細 jobs.csv 與 full-native-smoke.log 位於 managed worktree ignored artifacts/acceptance。
+- 新乾淨包 layout／逐檔 SHA、異地 cwd／隔離 AppDomain 的 x1/x2 真實產品 steps 1–6 PASS／exit0；證據 artifacts/acceptance/package-2cb00c89c0ed4ddb9d1416f872cb316f。獨立來源／linkage／腳本 review 未發現其他需修正問題。
+- 本機真人成功轉檔是先前 runtime 的回饋；此次重編取得上述自動化證據，其他 GPU／高解析度長片／重編後真人操作未另驗證。接著需把 draft 的 v0.05 tag 對齊本次修正 commit、替換 source companion、發布並重跑遠端 Actions；原 tag commit 保留在主線歷史。
