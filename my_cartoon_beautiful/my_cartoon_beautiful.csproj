@@ -65,6 +65,9 @@
     <Compile Include="App_Code\app.cs" />
     <Compile Include="App_Code\ffmpeg_runtime.cs" />
     <Compile Include="App_Code\media_contracts.cs" />
+    <Compile Include="App_Code\ffmpeg_media_backend.cs" />
+    <Compile Include="App_Code\ffmpeg_input.cs" />
+    <Compile Include="App_Code\ffmpeg_video_decoder.cs" />
     <Compile Include="App_Code\ffmpeg_progress.cs" />
     <Compile Include="App_Code\include.cs" />
     <Compile Include="App_Code\process_runner.cs" />

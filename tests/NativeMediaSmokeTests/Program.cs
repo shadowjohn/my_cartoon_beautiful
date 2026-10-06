@@ -21,7 +21,7 @@ internal static class Program
             try { Environment.CurrentDirectory = Path.GetTempPath(); FfmpegRuntime.Load(native); }
             finally { Environment.CurrentDirectory = original; }
             RuntimeTests.Run();
-            Console.WriteLine(runtime.Configuration);
+            if(args.Contains("--decode")) DecodeTests.Run(new FfmpegMediaBackend(runtime));
             if(expectAbiFailure) throw new Exception("Wrong ABI accepted");
             Console.WriteLine("NativeMediaSmokeTests: PASS [runtime] " + runtime.Version);
             return 0;

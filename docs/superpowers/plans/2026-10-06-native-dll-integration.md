@@ -211,7 +211,7 @@ handle 只允許一個 process 呼叫；取消狀態對該 session sticky，取�
 - 建議由主代理在本聊天依 task 順序實作，末尾交獨立 reviewer 檢查；這批任務共享 media contract、native lifetime 與 packaging，逐步串接較容易定位失敗。
 - 各 task 測試只驗真正風險與 native 行為；不為文件／csproj 字串寫鏡像測試。
 - 相依鎖版是 Task 1 的必交成果；本計畫完成不代表 DLL 已下載／載入／通過 GPU 測試。
-- 本文件仍待使用者檢視與選擇執行方式；本輪只寫規格／計畫與 history。
+- 使用者已於 2026-10-06 同意執行及 4.7.2+x64；依序在 managed worktree 實作，進度另記 ledger/history。
 
 ## 已定位候選（未下載／未執行，Task 1 通過後才正式鎖定）
 
