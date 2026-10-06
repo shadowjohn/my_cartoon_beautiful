@@ -14,16 +14,24 @@ namespace {
 std::mutex registry;
 bool gpu_busy = false;
 struct Session {
-    bool gpu_initialized = false;
     int scale = 2;
+    const ncnn::VulkanDevice* device = nullptr;
+    bool used_allocators = false;
     std::unique_ptr<RealESRGAN> engine;
     std::atomic<bool> cancelled{false};
     std::mutex processing;
     ~Session() {
         // Keep the global GPU reservation until every process reference has returned.
         engine.reset();
+        // One worker uses these device-owned pools; all process refs have returned.
+        if (device && used_allocators) {
+            auto* blob = device->acquire_blob_allocator();
+            auto* staging = device->acquire_staging_allocator();
+            blob->clear(); staging->clear();
+            device->reclaim_blob_allocator(blob);
+            device->reclaim_staging_allocator(staging);
+        }
         std::lock_guard<std::mutex> lock(registry);
-        if (gpu_initialized) ncnn::destroy_gpu_instance();
         gpu_busy = false;
     }
 };
@@ -61,13 +69,14 @@ int32_t rs_create(const wchar_t* param,const wchar_t* model,int32_t gpu,int32_t 
           // Allocate before reserving; a failed allocation cannot leave a reservation behind.
           session=std::make_shared<Session>(); gpu_busy=true;
         }
-        session->gpu_initialized=true;
+        // Reuse ncnn's process-wide Vulkan instance; its holder finalizes at shutdown.
         if(ncnn::create_gpu_instance()!=0 || ncnn::get_gpu_count()==0)
             return fail(-3,"Vulkan GPU initialization failed",error,capacity);
         if(gpu==-1) gpu=ncnn::get_default_gpu_index();
         if(gpu<0 || gpu>=ncnn::get_gpu_count()) return fail(-3,"Requested Vulkan GPU is unavailable",error,capacity);
         if(!tile) { uint32_t budget=ncnn::get_gpu_device(gpu)->get_heap_budget();
             tile=budget>1900?200:budget>550?100:budget>190?64:32; }
+        session->device=ncnn::get_gpu_device(gpu);
         session->scale=scale;
         session->engine.reset(new RealESRGAN(gpu,tta!=0));
         session->engine->scale=scale; session->engine->tilesize=tile; session->engine->prepadding=10;
@@ -106,6 +115,7 @@ int32_t rs_process(void* handle,const uint8_t* input,uint64_t input_bytes,int32_
         // Keep neural RGB inference identical and resize straight alpha with ncnn's CPU bicubic.
         ncnn::Mat in(width,height,packed_in.data(),size_t(3),3);
         ncnn::Mat out(width*session->scale,height*session->scale,packed_out.data(),size_t(3),3);
+        session->used_allocators=true;
         int code=session->engine->process(in,out,session->cancelled,progress,user);
         if(code) return fail(code,code==1?"Cancelled":"GPU inference failed",error,capacity);
         if(session->cancelled.load()) return fail(1,"Cancelled",error,capacity);
@@ -138,4 +148,13 @@ void rs_destroy(void* handle) {
         }
         // Destruction outside registry mutex; process retains shared ownership when active.
     } catch(...) {}
+}
+
+int32_t rs_shutdown() {
+    try {
+        std::lock_guard<std::mutex> lock(registry);
+        if (gpu_busy) return -5;
+        ncnn::destroy_gpu_instance();
+        return 0;
+    } catch (...) { return -4; }
 }

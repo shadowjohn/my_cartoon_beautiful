@@ -10,5 +10,11 @@
     "patch": "native/patches/ncnn-gpu.cpp.patch",
     "originalSha256": "79a136d8b88c3a04e2f356517e24922e4943c80752114c5e42d79b7246bdc5a1",
     "patchedSha256": "9a24257d4c750eae7715e3ca5391ce14248d24cc34d145b069bc8de014014620"
+  },
+  {
+    "source": "glslang/glslang/OSDependent/Windows/ossource.cpp",
+    "patch": "native/patches/glslang-win-lock.patch",
+    "originalSha256": "5881bada76cc094996b72564ee518a86f4ba7e380d03a7e88fc818ee0a0df62b",
+    "patchedSha256": "625d8c40ec76c5c832555d05c10816465815f3a1867e0be7211c0476f34c0201"
   }
 ]

@@ -85,6 +85,7 @@ namespace utility_app
             }
         }
         private sealed class InlineProgress:IProgress<MediaProgress> { readonly Action<MediaProgress> report;internal InlineProgress(Action<MediaProgress> report){this.report=report;}public void Report(MediaProgress p){report(p);} }
+        public static void ShutdownRuntime() { RealEsrganNative.Shutdown(); }
         public void Dispose() {lock(gate){handle?.Dispose();handle=null;}}
     }
 }

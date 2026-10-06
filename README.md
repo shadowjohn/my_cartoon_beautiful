@@ -50,20 +50,37 @@
 5. 按下開始轉檔，等待成果
 
 ## 程式相依套件
-1. ffmpeg windows binary static (ffmpeg version N-116451-ge7d3ff8dcd-20240729)
-2. realesrgan-ncnn-vulkan (v0.2.0-windows)
-3. windows .net framework 4.6.2
-4. 建置用 NuGet：System.Resources.Extensions 4.7.1
 
-## 建置與發佈
+開發中的 Phase A 已改為 Windows x64 / .NET Framework 4.7.2。FFmpeg.AutoGen 9.0.1.1 呼叫匹配的 FFmpeg shared DLL；Real-ESRGAN 核心編譯為 `realesrgan_bridge.dll`，由 C# 直接呼叫。產品轉檔不啟動 ffmpeg.exe 或 Real-ESRGAN exe，仍保留 PNG 暫存、30 fps、SHA-256 去重及 x1–x4。
+
+x1 不需要 AI DLL／模型／Vulkan GPU；x2–x4 需要支援 Vulkan 的顯卡與既有 animevideov3 模型。H.264 會先實際初始化 NVENC，失敗時回退 OpenH264。四種音訊保留 AAC／MP3／Vorbis／PCM 語意；沒有音軌會明確失敗。yuv420p 需要偶數輸出寬高，過小 AI 輸入（小於11x11）也會明確拒絕。
+
+套件與 DLL 版本、SHA-256、上游 revisions 見 [native/dependencies.lock.json](native/dependencies.lock.json)。本專案程式維持 MIT；FFmpeg 本次固定組合為 LGPLv3，其他元件依各自授權，見 [第三方聲明](native/THIRD-PARTY-NOTICES.md)。舊版下載連結尚未更新。
+
+## 建置與本機驗證
+
+需要 Windows x64、.NET Framework 4.7.2 targeting pack、.NET 10 SDK，以及含 C++/CMake 工具的 Visual Studio Build Tools。建置腳本下載具 SHA-256 驗證的原生來源到 ignored `artifacts`，不需要安裝完整 Vulkan SDK。模型沿用 repository 的既有檔案。
+
 ```powershell
-dotnet build .\my_cartoon_beautiful\my_cartoon_beautiful.sln --configuration Release
-dotnet run --project .\tests\ProcessRunnerTests\ProcessRunnerTests.csproj
-dotnet run --project .\tests\UtilityTests\UtilityTests.csproj
-pwsh.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build_release.ps1 -Version V0.05
+./tools/prepare_native.ps1
+./tools/build_native.ps1 -Configuration Release -RequireGpu
+./tools/create_smoke_fixtures.ps1
+# 舊 CLI 只用於產生開發測試 fixture，不放進產品包。
+dotnet build tests/NativeMediaSmokeTests/NativeMediaSmokeTests.csproj -c Release
+./tests/NativeMediaSmokeTests/bin/Release/net472/NativeMediaSmokeTests.exe ./artifacts/native-runtime/ffmpeg --decode --audio --pipeline-stages --mux --lifecycle
+dotnet run --project tests/ProcessRunnerTests/ProcessRunnerTests.csproj
+dotnet run --project tests/UtilityTests/UtilityTests.csproj
+./tools/build_release.ps1 -Version native-dev -SkipBuild
+./tools/verify_native_release.ps1 -PackagePath ./artifacts/release/my_cartoon_beautiful_native-dev -RequireGpu
 ```
 
-發佈腳本會輸出 `artifacts\release\my_cartoon_beautiful_<版本>.zip` 與對應 `.sha256`。
+`build_release.ps1` 預設會準備相依、編譯 native/managed，再產出 ZIP／SHA-256；`-SkipBuild` 使用已建置的本機成果。驗證工具從其他工作目錄、隔離的 AppDomain 載入包內 managed/native DLL，檢查 SHA-256，啟動視窗並跑 x1／選用 x2 完整轉檔。測試工具、CLI、PDB 不進產品包。
+
+取消會等候目前 native/GPU 工作收尾；關窗也會等候。輸出 MP4 完整回讀影音後才替換指定檔案。勾選保留暫存時，成功、取消與失敗都保留該次 GUID 工作目錄；否則待工作釋放資源後清理。
+
+CI 建置 bridge 並跑 CPU decode/audio/x1 package smoke；若 runner 有系統 Vulkan loader 也跑 ABI，缺少時明列 NOT-RUN；GPU 對照、NVENC、長片與真人操作屬本機驗證，不能以 CI 代替。`--upscale` 的精確比較另需 legacy baseline 與 `tools/prepare_realesrgan_reference.ps1` 產生的相同工具鏈上游參考圖。`--endurance` 需 `create_smoke_fixtures.ps1 -IncludeEndurance`，記錄五次短片與一段十分鐘影片的同程序資源數值。
+
+本輪只產生本機測試包，未發布。公開散布前仍需準備固定 FFmpeg 組合及其靜態相依的完整對應原始碼／建置資料並隨發佈提供；固定來源連結不等於已組裝完成的 source bundle。
 
 ## 版本說明
 開發中 (2026-05-27)：CI 修正

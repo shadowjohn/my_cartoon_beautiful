@@ -20,6 +20,9 @@ RS_API int32_t __cdecl rs_process(void* handle, const uint8_t* input, uint64_t i
 RS_API void __cdecl rs_request_cancel(void* handle);
 // Safe with an in-flight process: requests cancellation; resources live until its return.
 RS_API void __cdecl rs_destroy(void* handle);
+// Call after all sessions/workers finish, before unloading the DLL or exiting the host.
+// Returns -5 if a session is still active; leaves that session untouched.
+RS_API int32_t __cdecl rs_shutdown(void);
 #ifdef __cplusplus
 }
 #endif

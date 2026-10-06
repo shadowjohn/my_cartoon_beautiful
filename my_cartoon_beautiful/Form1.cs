@@ -373,6 +373,9 @@ namespace my_cartoon_beautiful
 
 版本：" + PROGRAM_VERSION + @"
 作者：羽山 (https://3wa.tw)
+
+FFmpeg shared libraries：LGPLv3
+Real-ESRGAN：MIT；詳見 THIRD-PARTY-NOTICES.md
 ";
             MessageBox.Show(message, "說明", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }

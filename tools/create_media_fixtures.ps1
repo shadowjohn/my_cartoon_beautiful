@@ -118,12 +118,12 @@ Write-Output 'Legacy baseline finished.'
 # Additional timing/geometry fixtures (all generated under artifacts).
 $ErrorActionPreference='Stop'
 $ffmpeg=Join-Path $repo 'my_cartoon_beautiful/binary/ffmpeg.exe'
-$source='artifacts/media-tests/fixtures/sync-30fps.mp4'
-& $ffmpeg -hide_banner -loglevel error -y -display_rotation:v:0 90 -i $source -c copy artifacts/media-tests/fixtures/sync-rotate.mp4
+$source=Join-Path $fixtures 'sync-30fps.mp4'
+& $ffmpeg -hide_banner -loglevel error -y -display_rotation:v:0 90 -i $source -c copy (Join-Path $fixtures 'sync-rotate.mp4')
 if($LASTEXITCODE -ne 0){throw 'rotate fixture'}
-& $ffmpeg -hide_banner -loglevel error -y -i $source -c copy -output_ts_offset 2 artifacts/media-tests/fixtures/sync-offset.mp4
+& $ffmpeg -hide_banner -loglevel error -y -i $source -c copy -output_ts_offset 2 (Join-Path $fixtures 'sync-offset.mp4')
 if($LASTEXITCODE -ne 0){throw 'offset fixture'}
-& $ffmpeg -hide_banner -loglevel error -y -i $source -c:v mpeg4 -bf 2 -q:v 2 -c:a copy artifacts/media-tests/fixtures/sync-bframes.mp4
+& $ffmpeg -hide_banner -loglevel error -y -i $source -c:v mpeg4 -bf 2 -q:v 2 -c:a copy (Join-Path $fixtures 'sync-bframes.mp4')
 if($LASTEXITCODE -ne 0){throw 'bframes fixture'}
-& $ffmpeg -hide_banner -loglevel error -y -i $source -vf setsar=4/3 -c:v mpeg4 -q:v 2 -c:a copy artifacts/media-tests/fixtures/sync-sar.mp4
+& $ffmpeg -hide_banner -loglevel error -y -i $source -vf setsar=4/3 -c:v mpeg4 -q:v 2 -c:a copy (Join-Path $fixtures 'sync-sar.mp4')
 if($LASTEXITCODE -ne 0){throw 'sar fixture'}

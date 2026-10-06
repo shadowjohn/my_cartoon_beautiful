@@ -2,34 +2,43 @@ name: Build .NET Framework Desktop Application
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Setup .NET Framework
-      uses: microsoft/setup-msbuild@v2
-
-    - name: Install NuGet
-      uses: NuGet/setup-nuget@v2
-
-    - name: Restore NuGet packages
-      run: nuget restore my_cartoon_beautiful/my_cartoon_beautiful.sln
-
-    - name: Build solution
-      run: msbuild my_cartoon_beautiful/my_cartoon_beautiful.sln /p:Configuration=Release /p:Platform="x64"
-
-    - name: Archive build output
-      uses: actions/upload-artifact@v4
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v4
       with:
-        name: build-output
-        path: my_cartoon_beautiful/bin/Release/
+        dotnet-version: '10.0.x'
+    - uses: microsoft/setup-msbuild@v2
+    - name: Prepare pinned native runtime and build bridge (GPU not available in CI)
+      shell: pwsh
+      run: |
+        ./tools/prepare_native.ps1
+        $hasVulkan = Test-Path -LiteralPath "$env:WINDIR/System32/vulkan-1.dll"
+        ./tools/build_native.ps1 -Configuration Release -SkipTests:(!$hasVulkan)
+    - name: Build and CPU tests
+      shell: pwsh
+      run: |
+        dotnet build tests/NativeMediaSmokeTests/NativeMediaSmokeTests.csproj -c Release
+        if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
+        ./tools/create_smoke_fixtures.ps1
+        ./tests/NativeMediaSmokeTests/bin/Release/net472/NativeMediaSmokeTests.exe ./artifacts/native-runtime/ffmpeg --decode --audio
+        if ($LASTEXITCODE -ne 0) { throw 'Native CPU tests failed' }
+        dotnet run --project tests/ProcessRunnerTests/ProcessRunnerTests.csproj
+        if ($LASTEXITCODE -ne 0) { throw 'Process tests failed' }
+        dotnet run --project tests/UtilityTests/UtilityTests.csproj
+        if ($LASTEXITCODE -ne 0) { throw 'Utility tests failed' }
+    - name: Stage and verify isolated package (x1 software H.264)
+      shell: pwsh
+      run: |
+        ./tools/build_release.ps1 -Version ci -SkipBuild -NoZip
+        ./tools/verify_native_release.ps1 -PackagePath ./artifacts/release/my_cartoon_beautiful_ci
+    - uses: actions/upload-artifact@v4
+      with:
+        name: native-win-x64
+        path: artifacts/release/my_cartoon_beautiful_ci/

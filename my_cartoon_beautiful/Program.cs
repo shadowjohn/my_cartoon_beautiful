@@ -23,7 +23,8 @@ namespace my_cartoon_beautiful
             //AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            try { Application.Run(new Form1()); }
+            finally { utility_app.RealEsrganUpscaler.ShutdownRuntime(); }
         }
     }
 }

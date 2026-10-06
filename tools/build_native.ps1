@@ -1,6 +1,7 @@
 [CmdletBinding()]
-param([ValidateSet('Release','Debug')][string]$Configuration='Release', [switch]$RequireGpu, [int]$Jobs=4)
+param([ValidateSet('Release','Debug')][string]$Configuration='Release', [switch]$RequireGpu, [switch]$SkipTests, [int]$Jobs=4)
 $ErrorActionPreference='Stop'
+if($SkipTests -and $RequireGpu){throw 'RequireGpu cannot be combined with SkipTests'}
 $repo=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $cache=Join-Path $repo 'artifacts/native-cache'
 $sourceRoot=Join-Path $repo 'artifacts/native-source'
@@ -38,12 +39,12 @@ foreach($source in $manifest.realesrgan.sources){
         }
     }else{$paths[$source.name]=$archive}
 }
-& (Join-Path $PSScriptRoot 'patch_native_sources.ps1') -NcnnSource $paths.ncnn
 $ncnnGlslang=Join-Path $paths.ncnn 'glslang'
 if(!(Test-Path -LiteralPath (Join-Path $ncnnGlslang 'CMakeLists.txt'))){
     New-Item -ItemType Directory -Force -Path $ncnnGlslang | Out-Null
     Get-ChildItem -LiteralPath $paths.glslang -Force | Copy-Item -Destination $ncnnGlslang -Recurse -Force
 }
+& (Join-Path $PSScriptRoot 'patch_native_sources.ps1') -NcnnSource $paths.ncnn
 $vulkanLib=Join-Path $cache 'vulkan-1.lib'
 & $lib /nologo /machine:x64 "/def:$($paths.vulkanDef)" "/out:$vulkanLib"
 if($LASTEXITCODE -ne 0){throw 'Vulkan import library creation failed'}
@@ -65,8 +66,10 @@ if($RequireGpu){$modelArg='-DRS_MODEL_DIR='+(Join-Path $repo 'my_cartoon_beautif
 if($LASTEXITCODE -ne 0){throw 'Native bridge configuration failed'}
 & $cmake --build $build --config $Configuration --parallel $Jobs
 if($LASTEXITCODE -ne 0){throw 'Native bridge build failed'}
-& $ctest --test-dir $build -C $Configuration --output-on-failure
-if($LASTEXITCODE -ne 0){throw 'Native ABI/GPU tests failed'}
+if($SkipTests){Write-Warning 'Native ABI/GPU execution NOT-RUN (SkipTests requested)'}else{
+    & $ctest --test-dir $build -C $Configuration --output-on-failure
+    if($LASTEXITCODE -ne 0){throw 'Native ABI/GPU tests failed'}
+}
 $runtime=Join-Path $repo 'artifacts/native-runtime/realesrgan'
 New-Item -ItemType Directory -Force -Path $runtime | Out-Null
 Copy-Item -LiteralPath (Join-Path $build "$Configuration/realesrgan_bridge.dll") -Destination $runtime -Force

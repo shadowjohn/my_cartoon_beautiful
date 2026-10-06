@@ -34,3 +34,24 @@ core as an artifact-only oracle with matching dependencies. Bridge x2/x3/x4
 outputs exactly matched this oracle. The old prebuilt executable differed by
 MAE0.0884-0.0949 and maximum4/255; tests retain a bounded legacy comparison
 (max4, MAE0.12) plus exact rebuilt-core comparison, with magnified diff images.
+
+Lifecycle acceptance: retain ncnn's process-wide Vulkan instance/device across jobs,
+using its existing instance holder for DLL shutdown. Each job still destroys its
+model/session, and concurrent sessions remain rejected. A raw Vulkan-only probe
+on the local installed loader/ICD/layer stack reproduced +5 kernel handles per
+VkDevice create/destroy, without ncnn or inference. Reusing the intended runtime
+lifetime avoids that repeated initialization. Also patch pinned glslang's Windows
+InitGlobalLock: its repeated CreateMutex overwrote an unclosed HANDLE; a single
+process-lifetime recursive lock preserves semantics and is safe during ncnn's
+cross-translation-unit shutdown. The small lock and runtime caches intentionally
+remain until process exit; this is separate from job-owned allocations.
+
+After model teardown, the single worker clears its device-owned idle blob/staging
+allocator pools before reclaiming them. This returns frame buffers at job end
+while retaining the bounded Vulkan runtime and utility pipelines.
+
+Hosts must call rs_shutdown after all sessions/workers finish and before DLL
+unload/process exit. This explicit shutdown runs while glslang/ncnn globals are
+alive; relying on their cross-translation-unit static destructors caused an
+exit-time crash in CTest. Program.Main and the isolated probe use finally.
+Shutdown returns busy without touching an active session.

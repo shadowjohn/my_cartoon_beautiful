@@ -1,0 +1,42 @@
+--- glslang/glslang/OSDependent/Windows/ossource.cpp
++++ glslang/glslang/OSDependent/Windows/ossource.cpp
+@@ -32,6 +32,7 @@
+ // POSSIBILITY OF SUCH DAMAGE.
+ //
+ 
++#include <mutex>
+ #include "../osinclude.h"
+ 
+ #define STRICT
+@@ -109,21 +110,27 @@
+         return false;
+ }
+ 
+-HANDLE GlobalLock;
++// The ncnn instance holder finalizes at DLL shutdown; keep this lock alive
++// across translation-unit destructor ordering and repeated process init.
++static std::recursive_mutex& GlobalLock()
++{
++    static auto* lock = new std::recursive_mutex;
++    return *lock;
++}
+ 
+ void InitGlobalLock()
+ {
+-    GlobalLock = CreateMutex(0, false, 0);
++    (void)GlobalLock();
+ }
+ 
+ void GetGlobalLock()
+ {
+-    WaitForSingleObject(GlobalLock, INFINITE);
++    GlobalLock().lock();
+ }
+ 
+ void ReleaseGlobalLock()
+ {
+-    ReleaseMutex(GlobalLock);
++    GlobalLock().unlock();
+ }
+ 
+ unsigned int __stdcall EnterGenericThread (void* entry)

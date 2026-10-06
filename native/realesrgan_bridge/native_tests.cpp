@@ -1,3 +1,5 @@
+#define NOMINMAX
+#include <windows.h>
 #include "rs_api.h"
 #include <cstdio>
 #include <vector>
@@ -29,7 +31,7 @@ int wmain(int argc,wchar_t** argv) {
     std::vector<uint8_t> in(96*64*3,127),out(192*128*3,0);
     int code=rs_process(h,in.data(),in.size(),96,64,3,288,out.data(),out.size(),576,nullptr,nullptr,error,sizeof(error));
     fprintf(stderr,"single tile=%d code=%d first=%u center=%u error=%s\n",tile,code,out[0],out[(64*192+96)*3],error);
-    rs_destroy(h);return code;
+    rs_destroy(h);rs_shutdown();return code;
    }
    require(rs_create(param.c_str(),model.c_str(),9999,2,32,0,&h,error,sizeof(error))==-3 && !h,"invalid gpu");
    for(const char* content : {"", "7767517\n2 2\nInput data 0 1 data\nReLU broken 1 1 data", "7767517\n2 2\nInput data 0 1 data\nNoSuchLayer broken 1 1 data out\n"}) {
@@ -41,6 +43,7 @@ int wmain(int argc,wchar_t** argv) {
    require(rs_create(param.c_str(),L"invalid-model.bin",-1,2,32,0,&h,error,sizeof(error))==-2 && !h,"partial model load");
    _wremove(L"invalid-model.bin");
    require(rs_create(param.c_str(),model.c_str(),-1,2,32,0,&h,error,sizeof(error))==0 && h,error);
+   require(rs_shutdown()==-5,"shutdown cannot release an active session");
    void* second=nullptr;
    require(rs_create(param.c_str(),model.c_str(),-1,2,32,0,&second,error,sizeof(error))==-5 && !second,"second session busy");
    std::vector<uint8_t> input(96*64*3,127),output(192*128*3,0);
@@ -68,7 +71,18 @@ int wmain(int argc,wchar_t** argv) {
    require(rs_create(param.c_str(),model.c_str(),-1,3,32,0,&h,error,sizeof(error))==0,error);
    std::vector<uint8_t> wrongScale(288*192*3,0);
    require(rs_process(h,input.data(),input.size(),96,64,3,288,wrongScale.data(),wrongScale.size(),864,nullptr,nullptr,error,sizeof(error))==-4,"mismatched model scale");rs_destroy(h);
+   DWORD before=0,after=0;
+   require(GetProcessHandleCount(GetCurrentProcess(),&before)!=0,"read process handles");
+   for(int i=0;i<5;i++) {
+    require(rs_create(param.c_str(),model.c_str(),-1,2,32,0,&h,error,sizeof(error))==0,error);
+    require(rs_process(h,input.data(),input.size(),96,64,3,288,output.data(),output.size(),576,nullptr,nullptr,error,sizeof(error))==0,error);
+    rs_destroy(h);
+   }
+   require(GetProcessHandleCount(GetCurrentProcess(),&after)!=0,"read final handles");
+   fprintf(stderr,"repeated GPU jobs handles: %lu -> %lu\n",before,after);
+   require(after<=before+2,"GPU job handles accumulate");
   }
+  require(rs_shutdown()==0,"runtime shutdown");
   puts("RealESRGAN C ABI: PASS"); return 0;
  } catch(const std::exception& e) { fprintf(stderr,"FAIL: %s\n",e.what());return 1; }
 }

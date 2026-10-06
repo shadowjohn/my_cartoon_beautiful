@@ -4,13 +4,19 @@ using System.Linq;
 using utility_app;
 internal static class Program
 {
+    [STAThread]
     static int Main(string[] args)
     {
         bool expectAbiFailure = args.Contains("--expect-abi-failure");
         try
         {
+            if(args.Length>0 && args[0]=="--release") {ReleaseTests.Run(args[1],args[2],args[3],args.Contains("--gpu"));return 0;}
             string native = args.Length > 0 ? Path.GetFullPath(args[0]) : Path.GetFullPath("artifacts/native-runtime/ffmpeg");
             if (!Environment.Is64BitProcess) throw new Exception("Expected x64 process");
+            if(args.Contains("--retry-after-rejected")) {
+                bool rejected=false;try{FfmpegRuntime.Load(args[Array.IndexOf(args,"--retry-after-rejected")+1]);}catch(NativeMediaException){rejected=true;}
+                if(!rejected)throw new Exception("Bad prebind runtime accepted");
+            }
             var runtime = FfmpegRuntime.Load(native);
             if (string.IsNullOrWhiteSpace(runtime.Version)) throw new Exception("No FFmpeg version");
             bool missingRejected = false;
@@ -23,6 +29,8 @@ internal static class Program
             RuntimeTests.Run();
             if(args.Contains("--pipeline-stages")) PipelineTests.Run(new FfmpegMediaBackend(runtime));
             if(args.Contains("--upscale")) UpscaleTests.Run();
+            if(args.Contains("--handles")) EnduranceTests.Run(new FfmpegMediaBackend(runtime),true);
+            if(args.Contains("--endurance")) EnduranceTests.Run(new FfmpegMediaBackend(runtime));
             if(args.Contains("--lifecycle")) LifecycleTests.Run();
             if(args.Contains("--mux")) MuxTests.Run(new FfmpegMediaBackend(runtime));
             if(args.Contains("--audio")) AudioTests.Run(new FfmpegMediaBackend(runtime));
@@ -32,5 +40,6 @@ internal static class Program
             return 0;
         }
         catch (Exception e) { if(expectAbiFailure && e is NativeMediaException && e.Message.Contains("ABI mismatch")) { Console.WriteLine("NativeMediaSmokeTests: PASS [ABI rejection]"); return 0; } Console.Error.WriteLine(e); return 1; }
+        finally { RealEsrganUpscaler.ShutdownRuntime(); }
     }
 }

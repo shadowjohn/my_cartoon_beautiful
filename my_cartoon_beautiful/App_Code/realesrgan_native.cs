@@ -38,6 +38,7 @@ namespace utility_app
                     IntPtr entry=GetProcAddress(candidate,"rs_abi_version");
                     if(entry==IntPtr.Zero || ((AbiVersion)Marshal.GetDelegateForFunctionPointer(entry,typeof(AbiVersion)))()!=1)
                         throw new NativeMediaException("upscale-runtime",-1,"Real-ESRGAN ABI mismatch");
+                    if(GetProcAddress(candidate,"rs_shutdown")==IntPtr.Zero)throw new NativeMediaException("upscale-runtime",-1,"Missing runtime shutdown export");
                     module=candidate;directory=path;candidate=IntPtr.Zero;
                 } finally {if(candidate!=IntPtr.Zero)FreeLibrary(candidate);}
             }
@@ -51,6 +52,9 @@ namespace utility_app
         internal static extern void Cancel(RealEsrganHandle handle);
         [DllImport(Library,EntryPoint="rs_destroy",CallingConvention=CallingConvention.Cdecl,ExactSpelling=true)]
         internal static extern void Destroy(IntPtr handle);
+        [DllImport(Library,EntryPoint="rs_shutdown",CallingConvention=CallingConvention.Cdecl,ExactSpelling=true)]
+        private static extern int ShutdownNative();
+        internal static void Shutdown() {lock(Sync){if(module!=IntPtr.Zero){int code=ShutdownNative();if(code!=0)throw new NativeMediaException("upscale-runtime",code,"Cannot shut down an active or failed native runtime");}}}
         internal static NativeMediaException Error(int code,byte[] buffer) {
             int length=Array.IndexOf(buffer,(byte)0);if(length<0)length=buffer.Length;
             return new NativeMediaException("upscale",code,Encoding.UTF8.GetString(buffer,0,length));

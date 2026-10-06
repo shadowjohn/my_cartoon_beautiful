@@ -174,3 +174,15 @@ P2：
 - WinForms 單一 CTS/activeJob、GUID 工作目录、停止後等待、關窗 await worker/native cleanup；移除 Environment.Exit 與每階段重設 CTS/阻塞延遲。失敗／取消的非保留暫存於 awaited worker 結束後清理。
 - UI 啟動測試發現 Resources.Extensions 4.0.0.0/4.0.1.0 繫結不符，補正確 binding redirect；真實 WinForms message loop 關窗等待測試 PASS。native decode/audio/upscale 取消後重試與 Release build PASS，兩組既有測試 PASS。
 - 以上為自動化本機證據；真人操作、完整乾淨 release package、長片與記憶體趨勢仍待 Task9。未發布、未push。
+
+## 2026-10-06 Phase A Task 9：乾淨打包、原生生命週期
+
+- 發佈包明列 managed DLL、FFmpeg七個 shared DLL、bridge、六個模型檔、config、授權／provenance／逐檔SHA；排除舊CLI與OpenMP runtime。版本字串限單一安全檔名、遞迴刪除只允許指定output root的嚴格子目錄。
+- 真正隔離AppDomain／異地cwd測試找到 System.Memory 等間接相依未被舊式 csproj複製，已追加明確reference；缺managed/native檔案皆明確拒絕，x1包可啟動WinForms並跑產品step1–step6。
+- FFmpeg loader改先用原生exports查ABI/config/license，失敗逆序卸載；一旦AutoGen binding開始則保持modules並鎖定失敗，避免快取函式指標指向已卸載DLL。錯誤ABI後同程序載入正確runtime PASS。
+- 第一輪同程序五短片＋10分鐘片（18,000幀）全部成功，private peak458.96MiB，長片後264.07MiB；GPU使用回低值。但每短片+6handle，因此不以該輪宣稱無洩漏。
+- 根因1：glslang InitGlobalLock覆寫CreateMutex未關閉，改單一程序生命週期recursive lock。根因2：不含AI的raw Vulkan device create/destroy仍每次+5（Event3/Mutant1/Section1），定位在本機loader/ICD/layer路徑，不能單獨指認某家driver。
+- bridge保留ncnn程序級GPU runtime；每job模型/session釋放，最後worker結束後清空idle blob/staging pools。新增rs_shutdown於程式Main finally／測試host unload前呼叫，避開ncnn/glslang全域解構順序造成exit-time crash。shutdown遇活躍session回busy。CTest ABI/GPU2/2正常exit0，五次GPUjob handle405→405。
+- GitHub Actions已更新native build／CPU smoke／乾淨package驗證；runner沒有系統Vulkan loader時ABI明列NOT-RUN。尚未push，未取得遠端CI執行證據。
+- WMI process-start事件訂閱被本機拒絕存取；未提權，因此沒有事件級「零子程序」證據。已查核app/include六個原callsite消失，發佈包沒有兩支exe，並實際執行DLL流程。
+- 真人按鈕操作／其他GPU與高解析度長片仍未驗證；本輪不發布。公開散布前須另外組裝固定FFmpeg與其外部相依完整對應source bundle；目前授權全文與固定來源／建置資訊已隨本機包提供。
