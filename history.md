@@ -219,3 +219,11 @@ P2：
 - Release x64 與 NativeMediaSmokeTests build 成功，0 warnings/errors；新包 isolated x1/x2（GPU required）完整轉檔 PASS／exit0，含真實產品 steps 1–6；證據位於 artifacts/acceptance/package-65e8f2e4331741d7821ca9c419b485df。
 - 新 EXE 的 FileVersion 0.5.0.0、ProductVersion 0.05、AssemblyVersion 0.5.0.0 已實讀確認；package layout／逐檔 SHA 通過。既有 UTF-8 BOM 與 CRLF 格式維持，git diff --check 通過。
 - 本機發佈產物位於 ignored artifacts/release/my_cartoon_beautiful_v0.05；維持 codex/native-media-dll 分支，不合併 main 或上傳 GitHub。公開 binary 發佈仍需完成先前記錄的 FFmpeg 完整對應 source bundle；其他 GPU／高解析度長片與遠端 CI 邊界不變。
+
+## 2026-10-06 v0.05 合併 main 與推送範圍
+
+- 使用者明確核准「併回 main 可以上 git push」。fetch 確認遠端 main 與原本機 main 同為 a3f1528，無遠端 v0.05 標籤；本機 main 已 fast-forward 至 v0.05 的 50e5d25，無衝突。
+- 此次核准推送 main 與既有 v0.05 標籤，標籤保持指向已通過本機與使用者驗收的 50e5d25；不重寫歷史。83 個整合變更檔案皆為 source/docs/licenses/scripts，沒有新增追蹤 DLL、EXE、模型、ZIP 或驗收產物。
+- 發現 main CI 會自動上傳整包 native binary；為符合前述尚待完整 FFmpeg source bundle 的發佈邊界，本輪移除 upload-artifact 步驟，保留 native/managed build、CPU tests 與隔離 package 驗證。README 同步說明。
+- 沿用 v0.05 Release build 0 warnings/errors、isolated x1/x2 PASS 與使用者成功轉檔證據；本輪合併與文件／CI 上傳調整不改產品程式。遠端 CI 尚待本次推送後執行；GitHub Release／ZIP 公開下載不在本次操作內。
+- 原設計文件 stash、managed worktree 與 ignored native runtime／本機 ZIP 全部保留。

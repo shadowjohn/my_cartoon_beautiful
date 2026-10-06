@@ -38,7 +38,4 @@ jobs:
       run: |
         ./tools/build_release.ps1 -Version ci -SkipBuild -NoZip
         ./tools/verify_native_release.ps1 -PackagePath ./artifacts/release/my_cartoon_beautiful_ci
-    - uses: actions/upload-artifact@v4
-      with:
-        name: native-win-x64
-        path: artifacts/release/my_cartoon_beautiful_ci/
+    # Publish binaries only after the complete FFmpeg corresponding source bundle is ready.

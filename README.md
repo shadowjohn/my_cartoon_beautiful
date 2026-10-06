@@ -81,7 +81,7 @@ dotnet run --project tests/UtilityTests/UtilityTests.csproj
 
 CI 建置 bridge 並跑 CPU decode/audio/x1 package smoke；若 runner 有系統 Vulkan loader 也跑 ABI，缺少時明列 NOT-RUN；GPU 對照、NVENC、長片與真人操作屬本機驗證，不能以 CI 代替。`--upscale` 的精確比較另需 legacy baseline 與 `tools/prepare_realesrgan_reference.ps1` 產生的相同工具鏈上游參考圖。`--endurance` 需 `create_smoke_fixtures.ps1 -IncludeEndurance`，記錄五次短片與一段十分鐘影片的同程序資源數值。
 
-本輪只產生本機測試包，未發布。公開散布前仍需準備固定 FFmpeg 組合及其靜態相依的完整對應原始碼／建置資料並隨發佈提供；固定來源連結不等於已組裝完成的 source bundle。
+v0.05 程式碼與標籤納入主線；下載包目前僅在本機產生。CI 保留建置與測試，暫不上傳二進位 artifact。公開散布前仍需準備固定 FFmpeg 組合及其靜態相依的完整對應原始碼／建置資料並隨發佈提供；固定來源連結不等於已組裝完成的 source bundle。
 
 ## 版本說明
 v0.05 版 (2026-10-06)：原生 DLL 整合
