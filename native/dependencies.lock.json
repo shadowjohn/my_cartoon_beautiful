@@ -71,6 +71,12 @@
         "url": "https://raw.githubusercontent.com/KhronosGroup/Vulkan-Loader/a0ab2f162ef2df46fc94ba39ae62e78e680a884d/loader/vulkan-1.def",
         "sha256": "166014c0b24e6d6b728a05fed1ea4b6a123ed2ac5d98f63f3a176da4e93ed75d"
       }
-    ]
+    ],
+    "referenceSource": {
+      "file": "realesrgan.zip",
+      "root": "Real-ESRGAN-ncnn-vulkan-37026f49824c5cf84062e7c6a5dd71445dcf610f",
+      "url": "https://codeload.github.com/xinntao/Real-ESRGAN-ncnn-vulkan/zip/37026f49824c5cf84062e7c6a5dd71445dcf610f",
+      "sha256": "3fa27bd0b89269da613d6a232ffed81cc7e1b621950ebc4907418892db23503b"
+    }
   }
 }

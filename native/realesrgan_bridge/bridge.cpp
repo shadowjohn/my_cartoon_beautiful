@@ -8,6 +8,7 @@
 #include <mutex>
 #include <vector>
 #include <exception>
+#include <cmath>
 
 namespace {
 std::mutex registry;
@@ -82,22 +83,46 @@ int32_t rs_process(void* handle,const uint8_t* input,uint64_t input_bytes,int32_
     int32_t output_stride,rs_progress progress,void* user,char* error,uint32_t capacity) {
     try {
         auto session=lookup(handle);
-        if(!session || !input || !output || !geometry(width,height,channels,input_stride,input_bytes) ||
+        if(!session || !input || !output || width<11 || height<11 || !geometry(width,height,channels,input_stride,input_bytes) ||
            width>INT_MAX/session->scale || height>INT_MAX/session->scale ||
            !geometry(width*session->scale,height*session->scale,channels,output_stride,output_bytes))
-            return fail(-1,"Invalid handle, dimensions, stride or buffer capacity",error,capacity);
+            return fail(-1,"Invalid handle, dimensions (minimum 11x11), stride or buffer capacity",error,capacity);
         std::unique_lock<std::mutex> operation(session->processing,std::try_to_lock);
         if(!operation.owns_lock()) return fail(-5,"This session is already processing",error,capacity);
         if(session->cancelled.load()) return fail(1,"Cancelled",error,capacity);
-        const size_t in_row=size_t(width)*channels, out_row=in_row*session->scale;
+        const size_t in_row=size_t(width)*3, out_row=in_row*session->scale;
         std::vector<uint8_t> packed_in(in_row*height),packed_out(out_row*height*session->scale);
-        for(int y=0;y<height;y++) memcpy(packed_in.data()+y*in_row,input+size_t(y)*input_stride,in_row);
-        ncnn::Mat in(width,height,packed_in.data(),size_t(channels),channels);
-        ncnn::Mat out(width*session->scale,height*session->scale,packed_out.data(),size_t(channels),channels);
+        ncnn::Mat alpha, scaled_alpha;
+        if(channels==4) { alpha.create(width,height,1,size_t(4),1); if(alpha.empty())return fail(-4,"Alpha allocation failed",error,capacity); }
+        for(int y=0;y<height;y++) {
+            const uint8_t* source=input+size_t(y)*input_stride;
+            if(channels==3) memcpy(packed_in.data()+y*in_row,source,in_row);
+            else for(int x=0;x<width;x++) {
+                memcpy(packed_in.data()+y*in_row+x*3,source+x*4,3);
+                alpha.row(y)[x]=source[x*4+3];
+            }
+        }
+        // Pinned GPU Interp alpha can lose the Vulkan device on this driver (also in the old CLI).
+        // Keep neural RGB inference identical and resize straight alpha with ncnn's CPU bicubic.
+        ncnn::Mat in(width,height,packed_in.data(),size_t(3),3);
+        ncnn::Mat out(width*session->scale,height*session->scale,packed_out.data(),size_t(3),3);
         int code=session->engine->process(in,out,session->cancelled,progress,user);
         if(code) return fail(code,code==1?"Cancelled":"GPU inference failed",error,capacity);
         if(session->cancelled.load()) return fail(1,"Cancelled",error,capacity);
-        for(int y=0;y<height*session->scale;y++) memcpy(output+size_t(y)*output_stride,packed_out.data()+y*out_row,out_row);
+        if(channels==4) {
+            ncnn::Option option;option.num_threads=1;option.use_vulkan_compute=false;option.use_packing_layout=false;
+            ncnn::resize_bicubic(alpha,scaled_alpha,width*session->scale,height*session->scale,option);
+            if(scaled_alpha.empty())return fail(-4,"Alpha resize failed",error,capacity);
+            if(session->cancelled.load())return fail(1,"Cancelled",error,capacity);
+        }
+        for(int y=0;y<height*session->scale;y++) {
+            uint8_t* destination=output+size_t(y)*output_stride;
+            if(channels==3) memcpy(destination,packed_out.data()+y*out_row,out_row);
+            else for(int x=0;x<width*session->scale;x++) {
+                memcpy(destination+x*4,packed_out.data()+y*out_row+x*3,3);
+                destination[x*4+3]=uint8_t(std::min(255.f,std::max(0.f,std::floor(scaled_alpha.row(y)[x]+0.5f))));
+            }
+        }
         return fail(0,"",error,capacity);
     } catch(const std::exception& e) { return fail(-4,e.what(),error,capacity); }
       catch(...) { return fail(-4,"Unexpected native inference error",error,capacity); }

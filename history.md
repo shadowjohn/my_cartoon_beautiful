@@ -158,3 +158,11 @@ P2：
 - 空模型負面測試抓到 pinned ncnn 在載入失敗後仍 create/upload；已用具原始／修補 SHA 的最小 patch 提前失敗並傳遞 GPU wait 錯誤，補 partial-param ownership/null cleanup 及未初始化 GPU flag。
 - 編譯踩雷：長來源路徑超過 MSVC include 限制，縮短 cache 目錄；新增 shader 檢查曾造成 dangling-else，灰階對照測試抓到255而非舊版130，補 braces 後通過。
 - 完整 script staging 成功；尚未代表 C# PNG 對照、UI、MP4 pipeline、長片或 release 包通過。Native upstream 有既有 CMake deprecation/字碼頁警告。
+
+## 2026-10-06 Phase A Task 5：C# PNG adapter / GPU 對照
+
+- Cdecl P/Invoke、SafeHandle、絕對路徑 DLL loader、BGR/BGRA row copy、negative stride、PNG 完成後發布、取消 delegate lifetime 已實作。Release build 0 warnings/errors；--upscale PASS。
+- x2/x3/x4 尺寸、正負 stride／RGB 色序／alpha、模型缺失、Unicode 模型路径、session 重用、tile 取消與新 job 重試皆通過。
+- 舊 v0.2 exe 比較：MAE 0.09487576/0.09206211/0.08833143，最大差值皆4/255；未宣稱逐像素一致。另以相同 pinned ncnn／shader／compiler 編譯未修改上游核心，三倍率均與 DLL MAE0/max0。tools/prepare_realesrgan_reference.ps1 可重現，diff32 圖留 artifacts。測試要求 rebuilt-reference 精確一致，legacy max4/MAE0.12 內。
+- GPU alpha 路徑在新舊 core 都觸發 VK_ERROR_DEVICE_LOST；BGRA 改以 ncnn CPU bicubic 處理 alpha，GPU RGB 算法不變。小於11x11輸入明確拒絕，避免原核心單次鏡射 padding 越界。
+- 本機 native/managed 圖片驗證通過；WinForms 還未改用這些元件，MP4 完整流程與發佈／長片仍 pending。
