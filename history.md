@@ -235,3 +235,6 @@ P2：
 - workflow 增加 workflow_dispatch，可在 Actions 的 Run workflow 選 main 執行；同一 ref 新 run 取消舊 run，避免 push 與手動重複建置。新增 always 執行的 Summary，列 native、managed/CPU、x1 package 結果及產品版本。README 同步使用入口。
 - 本機 YAML 結構、inline PowerShell 語法與 Summary 執行檢查通過；接著推送並實際觸發手動 run 驗證。二進位 artifact upload 維持關閉。
 - hosted runner 缺 nvcuda.dll 並成功回退軟體 H.264；GPU inference／NVENC／長時間 GPU 驗收仍屬本機邊界。Node20 actions 被 runner 切至 Node24 的警告未造成失敗，本輪不順帶升級 action majors。
+- 手動入口實測完成：workflow_dispatch run 37423452118（https://github.com/shadowjohn/my_cartoon_beautiful/actions/runs/37423452118）在 785cc5b 上 success，build job 7m50s。native ABI 1/1、managed／CPU tests、isolated x1 產品流程及 Write build summary 全部 success。
+- 同提交的 push run 37423441204 已由 concurrency 自動取消，確認避免重複建置生效。完整 run.json／run.log／watch.log 保存在 ignored artifacts/acceptance/github-actions-37423452118；遠端 runner 的 GPU inference／NVENC 仍明列 NOT-RUN。
+- 本次收尾只追加驗收紀錄，以 [skip ci] 文件 commit 保存，避免重新建置相同產品與 workflow；實際通過遠端驗證的程式／workflow commit 為 785cc5b。
