@@ -5,7 +5,7 @@ using utility_app;
 internal static class AudioTests
 {
     private sealed class CancelProgress:IProgress<MediaProgress>{readonly CancellationTokenSource cts;public CancelProgress(CancellationTokenSource c){cts=c;}public void Report(MediaProgress p){if(p.Completed>0)cts.Cancel();}}
-    private static void MeasureWave(string path,AudioMode mode)
+    internal static void MeasureWave(string path,AudioMode mode)
     {
         using(var reader=new BinaryReader(File.OpenRead(path)))
         {

@@ -1,10 +1,7 @@
 ﻿using my_cartoon_beautiful;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -125,166 +122,13 @@ namespace utility_app
         }
         public async Task<bool> step5_aiPng_to_mp4(string workPath, string targetFile, CancellationToken cancellationToken)
         {
-            string ffmpegBin = Path.Combine(theform.PWD, "binary", "ffmpeg.exe");
-            if (!theform.my.is_file(ffmpegBin))
-            {
-                MessageBox.Show("轉檔工具 " + ffmpegBin + " 不存在...", "異常", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
-            }
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("高解析度影像與聲音檔合併輸出...");
-            }));
-
-            string soundkind = theform.comboBox_soundKind.Text.Trim();
-            string audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
-
-            switch (soundkind.ToUpper())
-            {
-                case "AAC":
-                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".aac");
-                    break;
-                case "LIBMP3LAME":
-                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".mp3");
-                    break;
-                case "OGG":
-                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".ogg");
-                    break;
-                default:
-                    // 原音
-                    audioFile = Path.Combine(workPath, theform.my.mainname(targetFile) + ".wav");
-                    break;
-            }
-
-            string aIPngPath = Path.Combine(workPath, "target");
-            string progressFilePath = Path.Combine(workPath, "progress.txt");
-
-            if (theform.my.is_file(progressFilePath))
-            {
-                theform.my.unlink(progressFilePath);
-            }
-            // 計算總圖片數量
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("計算有多少圖片需處理...");
-            }));
-
-            long totalsPngs = theform.my.glob(aIPngPath, "*.png").Count();
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("計算有多少圖片需處理..." + totalsPngs.ToString());
-            }));
-            await Task.Delay(1000); // 使用非阻塞的延遲
-
-            string codec = (theform.my.checkNvenc(ffmpegBin)) ? "h264_nvenc" : "h264";
-
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                FileName = ffmpegBin,
-                //-strict experimental
-                // -hwaccel dxva2
-                //libx264
-                // -progress \"{progressFilePath}\" -loglevel quiet
-                Arguments = $" -hwaccel auto -y -framerate 30 -i \"{aIPngPath}\\%08d.png\" -i \"{audioFile}\" -c:v \"{codec}\" -pix_fmt yuv420p -acodec copy \"{targetFile}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            Console.WriteLine(startInfo.Arguments);
-
-            theform.Invoke((MethodInvoker)(() =>
-            {
-                theform.setProgressTitle("高解析度影像與聲音合併中...");
-            }));
-
-            return await Task.Run(() =>
-            {
-                bool isCancel = false;
-                using (Process process = new Process())
-                {
-                    process.StartInfo = startInfo;
-
-                    /*process.OutputDataReceived += (sender, e) =>
-                    {
-                        if (!string.IsNullOrEmpty(e.Data))
-                        {
-                            Console.WriteLine($"Output: {e.Data}");
-                        }
-                    };
-                    */
-
-                    process.ErrorDataReceived += (sender, e) =>
-                    {
-                        if (!string.IsNullOrEmpty(e.Data) && theform.my.is_string_like(e.Data, "frame=") && theform.my.is_string_like(e.Data, "fps="))
-                        {
-                            //Console.WriteLine($"Error: {e.Data}");
-                            string frame = theform.my.get_between(e.Data, "frame= ", " fps=");
-                            if (!string.IsNullOrEmpty(frame))
-                            {
-                                long frames = Convert.ToInt64(frame);
-                                double p = theform.my.arduino_map(frames, 0, totalsPngs, ProgressStep5Start, ProgressStep5End);
-                                p = (p >= ProgressStep5End) ? ProgressStep5End : p;
-                                theform.Invoke((MethodInvoker)(() => theform.setProgress(p)));
-                                /*if (frames >= totalsPngs - 1)
-                                {
-                                    isNeedStop = true;
-                                }*/
-                            }
-                        }
-                    };
-
-                    try
-                    {
-                        process.Start();
-                        process.BeginOutputReadLine();
-                        process.BeginErrorReadLine();
-                        // process.HasExited
-                        Task.Delay(1000).Wait(); // 非阻塞的延遲
-                        //Console.WriteLine("is file: " + theform.my.is_file(targetFile));
-                        //Console.WriteLine("is file lock: " + theform.my.isFileLocked(targetFile));
-                        //!theform.my.is_file(targetFile) || (theform.my.is_file(targetFile) && theform.my.isFileLocked(targetFile))
-                        Int64 st = Convert.ToInt64(theform.my.strtotime(theform.my.grid_getRowValueFromNindNameAndCellName(theform.logDataGridView, "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", "開始時間")));
-                        while (!process.HasExited)
-                        {
-                            if (cancellationToken.IsCancellationRequested)
-                            {
-                                try
-                                {
-                                    process.Kill(); // 終止 ffmpeg 進程
-                                    process.Dispose();
-                                }
-                                catch
-                                {
-                                }
-                                isCancel = true;
-                                cancellationToken.ThrowIfCancellationRequested();
-                                break;
-                            }
-                            Int64 et = Convert.ToInt64(theform.my.strtotime(theform.my.date("Y-m-d H:i:s")));
-                            Int64 duration = et - st;
-                            theform.my.grid_updateRow(theform.logDataGridView, "將 ai 轉的高解析度影像 與 聲音檔 合併輸出成 mp4", "經過時間", duration + " 秒");
-                            Task.Delay(1000).Wait(); // 非阻塞的延遲                            
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Exception 603: {ex.Message}");
-                        return false;
-                    }
-                }
-
-                theform.Invoke((MethodInvoker)(() =>
-                {
-                    theform.setProgress(ProgressStep5Done);
-                    theform.setProgressTitle("高解析度影像與聲音合併完成...");
-                }));
-                if (isCancel)
-                {
-                    return false;
-                }
-                return true;
-            }, cancellationToken);
+            var progress = new StageProgress(theform, p => {
+                theform.setProgressTitle(p.Stage == "validate" ? "檢查輸出影音..." : "合成 MP4: " + p.Completed + " / " + p.Total);
+                if (p.Total > 0) theform.setProgress(ProgressStep5Start + (double)p.Completed / p.Total.Value * (ProgressStep5End - ProgressStep5Start));
+            });
+            bool ok = await RunNativeStage(() => Backend.EncodeMp4(frames, audio, targetFile, EncoderPreference.PreferNvenc, progress, cancellationToken), cancellationToken);
+            if (ok) { theform.setProgress(ProgressStep5Done); theform.setProgressTitle("MP4 輸出完成"); }
+            return ok;
         }
         public async Task<bool> step6_remove_workPath(string workPath, CancellationToken cancellationToken)
         {

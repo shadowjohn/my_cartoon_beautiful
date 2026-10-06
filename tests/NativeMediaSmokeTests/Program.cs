@@ -23,6 +23,7 @@ internal static class Program
             RuntimeTests.Run();
             if(args.Contains("--pipeline-stages")) PipelineTests.Run(new FfmpegMediaBackend(runtime));
             if(args.Contains("--upscale")) UpscaleTests.Run();
+            if(args.Contains("--mux")) MuxTests.Run(new FfmpegMediaBackend(runtime));
             if(args.Contains("--audio")) AudioTests.Run(new FfmpegMediaBackend(runtime));
             if(args.Contains("--decode")) DecodeTests.Run(new FfmpegMediaBackend(runtime));
             if(expectAbiFailure) throw new Exception("Wrong ABI accepted");
