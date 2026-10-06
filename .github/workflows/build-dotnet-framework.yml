@@ -1,10 +1,15 @@
 name: Build .NET Framework Desktop Application
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
+concurrency:
+  group: native-build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -16,12 +21,14 @@ jobs:
         dotnet-version: '10.0.x'
     - uses: microsoft/setup-msbuild@v2
     - name: Prepare pinned native runtime and build bridge (GPU not available in CI)
+      id: native
       shell: pwsh
       run: |
         ./tools/prepare_native.ps1
         $hasVulkan = Test-Path -LiteralPath "$env:WINDIR/System32/vulkan-1.dll"
         ./tools/build_native.ps1 -Configuration Release -SkipTests:(!$hasVulkan)
     - name: Build and CPU tests
+      id: managed
       shell: pwsh
       run: |
         dotnet build tests/NativeMediaSmokeTests/NativeMediaSmokeTests.csproj -c Release
@@ -34,8 +41,38 @@ jobs:
         dotnet run --project tests/UtilityTests/UtilityTests.csproj
         if ($LASTEXITCODE -ne 0) { throw 'Utility tests failed' }
     - name: Stage and verify isolated package (x1 software H.264)
+      id: package
       shell: pwsh
       run: |
         ./tools/build_release.ps1 -Version ci -SkipBuild -NoZip
         ./tools/verify_native_release.ps1 -PackagePath ./artifacts/release/my_cartoon_beautiful_ci
+    - name: Write build summary
+      if: always()
+      shell: pwsh
+      env:
+        NATIVE_RESULT: ${{ steps.native.outcome }}
+        MANAGED_RESULT: ${{ steps.managed.outcome }}
+        PACKAGE_RESULT: ${{ steps.package.outcome }}
+      run: |
+        $summary = @(
+          '## Windows x64 / .NET Framework 4.7.2',
+          '',
+          ('Commit: `' + $env:GITHUB_SHA + '`'),
+          '',
+          '| Stage | Result |',
+          '| --- | --- |',
+          ('| Native DLL build | ' + $env:NATIVE_RESULT + ' |'),
+          ('| Managed build and CPU tests | ' + $env:MANAGED_RESULT + ' |'),
+          ('| Isolated x1 package conversion | ' + $env:PACKAGE_RESULT + ' |'),
+          '',
+          'GPU inference / NVENC: NOT-RUN on the hosted runner.',
+          'Native ABI tests run only when the system Vulkan loader is available; see the native build log.',
+          'The package is built and verified on the runner; binary artifact upload remains disabled.'
+        )
+        $exe = Join-Path $env:GITHUB_WORKSPACE 'my_cartoon_beautiful/bin/Release/my_cartoon_beautiful.exe'
+        if (Test-Path -LiteralPath $exe) {
+          $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($exe)
+          $summary += @('', ('Product version: ' + $version.ProductVersion + '; file version: ' + $version.FileVersion))
+        }
+        $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
     # Publish binaries only after the complete FFmpeg corresponding source bundle is ready.

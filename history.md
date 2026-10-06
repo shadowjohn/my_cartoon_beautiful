@@ -227,3 +227,11 @@ P2：
 - 發現 main CI 會自動上傳整包 native binary；為符合前述尚待完整 FFmpeg source bundle 的發佈邊界，本輪移除 upload-artifact 步驟，保留 native/managed build、CPU tests 與隔離 package 驗證。README 同步說明。
 - 沿用 v0.05 Release build 0 warnings/errors、isolated x1/x2 PASS 與使用者成功轉檔證據；本輪合併與文件／CI 上傳調整不改產品程式。遠端 CI 尚待本次推送後執行；GitHub Release／ZIP 公開下載不在本次操作內。
 - 原設計文件 stash、managed worktree 與 ignored native runtime／本機 ZIP 全部保留。
+
+## 2026-10-06 GitHub Actions 遠端編譯與手動入口
+
+- 使用者要求由 GitHub Actions 自行編譯。已查核首次主線 run 37421190723（380ef9d）success，runner 實際從固定來源編出 ncnn／Real-ESRGAN bridge，再完成 managed Release build，非只使用本機成品。
+- 遠端 native ABI 1/1 PASS；managed build 0 warnings/errors，四種音訊／decode／runtime／ProcessRunner／Utility PASS；乾淨 package layout/hash 與隔離 x1／產品 steps 1–6 PASS。原始 log 留存 ignored artifacts/acceptance/github-actions-37421190723/run.log。
+- workflow 增加 workflow_dispatch，可在 Actions 的 Run workflow 選 main 執行；同一 ref 新 run 取消舊 run，避免 push 與手動重複建置。新增 always 執行的 Summary，列 native、managed/CPU、x1 package 結果及產品版本。README 同步使用入口。
+- 本機 YAML 結構、inline PowerShell 語法與 Summary 執行檢查通過；接著推送並實際觸發手動 run 驗證。二進位 artifact upload 維持關閉。
+- hosted runner 缺 nvcuda.dll 並成功回退軟體 H.264；GPU inference／NVENC／長時間 GPU 驗收仍屬本機邊界。Node20 actions 被 runner 切至 Node24 的警告未造成失敗，本輪不順帶升級 action majors。

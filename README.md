@@ -79,6 +79,8 @@ dotnet run --project tests/UtilityTests/UtilityTests.csproj
 
 取消會等候目前 native/GPU 工作收尾；關窗也會等候。輸出 MP4 完整回讀影音後才替換指定檔案。勾選保留暫存時，成功、取消與失敗都保留該次 GUID 工作目錄；否則待工作釋放資源後清理。
 
+GitHub 會在 push 至 `main` 或建立目標為 `main` 的 PR 時自動編譯，也可到 [Actions → Build .NET Framework Desktop Application](https://github.com/shadowjohn/my_cartoon_beautiful/actions/workflows/build-dotnet-framework.yml)，按 **Run workflow** 並選擇 `main` 手動執行。同一分支的新執行會取消舊的執行。Summary 會顯示 native DLL、C#／CPU 測試、x1 打包轉檔結果與 EXE 版本；成功不代表 hosted runner 已通過 GPU／NVENC 驗收。
+
 CI 建置 bridge 並跑 CPU decode/audio/x1 package smoke；若 runner 有系統 Vulkan loader 也跑 ABI，缺少時明列 NOT-RUN；GPU 對照、NVENC、長片與真人操作屬本機驗證，不能以 CI 代替。`--upscale` 的精確比較另需 legacy baseline 與 `tools/prepare_realesrgan_reference.ps1` 產生的相同工具鏈上游參考圖。`--endurance` 需 `create_smoke_fixtures.ps1 -IncludeEndurance`，記錄五次短片與一段十分鐘影片的同程序資源數值。
 
 v0.05 程式碼與標籤納入主線；下載包目前僅在本機產生。CI 保留建置與測試，暫不上傳二進位 artifact。公開散布前仍需準備固定 FFmpeg 組合及其靜態相依的完整對應原始碼／建置資料並隨發佈提供；固定來源連結不等於已組裝完成的 source bundle。
