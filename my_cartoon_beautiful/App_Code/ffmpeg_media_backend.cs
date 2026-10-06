@@ -18,7 +18,8 @@ namespace utility_app
             } }
         public FrameSequence ExtractFrames(string input,string directory,IProgress<MediaProgress> progress,CancellationToken token) { using(var media=new FfmpegInput(input,token,AVMediaType.AVMEDIA_TYPE_VIDEO))
             using(var decoder=new FfmpegVideoDecoder(media,directory,progress,token))return decoder.Run(); }
-        public AudioAsset ExtractAudio(string input,string outputBase,AudioMode mode,IProgress<MediaProgress> progress,CancellationToken token) { throw new NotImplementedException("audio"); }
+        public AudioAsset ExtractAudio(string input,string outputBase,AudioMode mode,IProgress<MediaProgress> progress,CancellationToken token) { using(var media=new FfmpegInput(input,token,AVMediaType.AVMEDIA_TYPE_AUDIO))
+            using(var encoder=new FfmpegAudioTranscoder(media,outputBase,mode,progress,token))return encoder.Run(); }
         public void EncodeMp4(FrameSequence frames,AudioAsset audio,string output,EncoderPreference encoder,IProgress<MediaProgress> progress,CancellationToken token) { throw new NotImplementedException("mux"); }
     }
 }

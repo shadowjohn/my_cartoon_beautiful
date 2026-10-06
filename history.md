@@ -144,3 +144,9 @@ P2：
 - 本機 net472 x64 smoke PASS：30fps/24fps 60張、VFR 59張、無音軌影片仍可拆幀、中文空白路徑、預先／進行中取消、損壞輸入、B-frames flush、非零起始 PTS、90度旋轉、4:3 SAR。新測試先在未實作 Probe 處 RED。
 - FrameSequence 增加 SAR 以避免 Bitmap PNG metadata 丟失影響最終比例；尚待 Task7 編碼端保留。旋轉 fixture 起初以 rotate tag 製作實際無 display matrix，改用 -display_rotation 並查核 metadata 後重測通過。
 - 舊 CLI baseline 已量測 AAC click 比來源延後21.333ms；其他音訊選項沒有該偏移；四種音訊抽取及 MP4 copy-mux 在本機皆成功。這些屬 baseline，不是新音訊 DLL 驗收。
+
+## 2026-10-06 Phase A Task 3: native audio
+
+- Implemented AAC192k, MP3q4, Vorbisq4 and PCM WAV via libavcodec/libavformat and filter-owned resampling/FIFO; no ffmpeg process.
+- Native audio smoke PASS: 48kHz mono sample count, click onset within one video frame, no-audio rejection, pre/in-flight cancellation and retry. AAC onset 1.021375s matches legacy priming; other modes 1.000041667s.
+- ADTS metadata duration is only an estimate; acceptance uses decoded PCM samples, not that estimate. MP4 mux/UI/package acceptance remains pending.
